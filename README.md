@@ -50,72 +50,84 @@ numflt  V_NUMFLOAT
 
 ## Grammar
 ```
-prog        : opt_decls R_BEGIN opt_stmts R_END
+prog
+    : opt_decls R_BEGIN opt_stmts R_END
 ;
 
-opt_decls   : decls
-            | %empty
+opt_decls
+    : decls
+    | %empty
 ;
 
-decls       : dec S_SEMICOLON decls
-            | dec
+decls
+    : dec S_SEMICOLON decls
+    | dec
 ;
 
-dec         : R_VAR V_ID S_COLON tipo {
-                meter_en_tabla($2, $4)
-            }
+dec
+    : R_VAR V_ID S_COLON tipo
 ;
 
-tipo        : R_INT
-            | R_FLOAT
+tipo
+    : R_INT
+    | R_FLOAT
 ;
 
-opt_stmts   : stmt_lst
-            | %empty
+opt_stmts
+    : stmt_lst
+    | %empty
 ;
 
-stmt_lst    : stmt S_SEMICOLON stmt_lst
-            | stmt
+stmt_lst
+    : stmt S_SEMICOLON stmt_lst
+    | stmt
 ;
 
-stmt        : V_ID S_ASSIGN expr
-            | R_IF S_PARENTL expression S_PARENTR stmt
-            | R_IFELSE S_PARENTL expression S_PARENTR stmt stmt
-            | R_WHILE S_PARENTL expression S_PARENTR stmt
-            | R_READ V_ID
-            | R_PRINT expr
-            | R_BEGIN opt_stmts R_END
+stmt
+    : V_ID S_ASSIGN expr
+    | R_IF S_PARENTL expression S_PARENTR stmt
+    | R_IFELSE S_PARENTL expression S_PARENTR stmt stmt
+    | R_WHILE S_PARENTL expression S_PARENTR stmt
+    | R_READ V_ID
+    | R_PRINT expr
+    | R_BEGIN opt_stmts R_END
 ;
 
-expression  : expr
-            | expr relop expr
+expression
+    : expr
+    | expr relop expr
 ;
 
-expr        : expr S_PLUS term
-            | expr S_MINUS term
-            | signo term
-            | term
+expr
+    : expr S_PLUS term
+    | expr S_MINUS term
+    | signo term
+    | term
 ;
 
-term        : term S_ASTERISK factor
-            | term S_SLASH factor
-            | factor
+term
+    : term S_ASTERISK factor
+    | term S_SLASH factor
+    | factor
 ;
 
-factor      : S_PARENTL expr S_PARENTR
-            | V_ID
-            | V_NUMINT
-            | V_NUMFLOAT
+factor
+    : S_PARENTL expr S_PARENTR
+    | V_ID
+    | V_NUMINT
+    | V_NUMFLOAT
 ;
 
-relop       : S_LESS
-            | S_GREATER
-            | S_EQUALS
-            | S_LTE
-            | S_GTE
+relop
+    : S_LESS
+    | S_GREATER
+    | S_EQUALS
+    | S_LTE
+    | S_GTE
 ;
 
-signo       : S_NEGATIVE
+signo
+    : S_NEGATIVE
 ;
 ```
 
@@ -134,7 +146,7 @@ Bison has to handle the values that each terminal returns inside of an union. Th
 ## Terminal Types
 Most terminals only return their code number, which is the Bison Union's code attribute, however, the three regular expressions have to return a value, which can be an identifier, or an integer, or a floating point.
 ```c
-%token<code>                    // Most of the terminals.
+%token<code>                    // All reserved terminals.
 %token<identifier> V_ID         // Identifier read as a string.
 %token<int_value> V_NUMINT      // Integer value read.
 %token<float_value> V_NUMFLOAT  // Float value read.
@@ -180,13 +192,12 @@ typedef struct hash_table {
 The Syntax Tree uses three node pointers defining what to use, its type, such as an instruction or a value, and an union value regarding the contents of this node, with the type defining how to use them.
 ```c
 typedef struct node {
-    union data {                // Data of this node.
-        int instruction;        // Instruction to execute of this node.
-        char * identifier;      // Identifier to read of this node.
-        union value {           // Value to read of this node.
-            int int_value;      // Integer depiction of the value.
-            int float_Value;    // Float depiction of the value.
-        }
+    union data {            // Data of this node.
+        int instruction;    // Instruction to execute of this node.
+        char * identifier;  // Identifier to read of this node.
+        int int_value;      // Integer depiction of the value.
+        int float_Value;    // Float depiction of the value.
+        
     }
 } node;
 ```
