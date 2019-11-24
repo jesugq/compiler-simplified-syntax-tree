@@ -36,12 +36,12 @@ DOT     [.]
 "/"     { return left_value_code(S_SLASH); }
 "("     { return left_value_code(S_PARENTL); }
 ")"     { return left_value_code(S_PARENTR); }
+"~"     { return left_value_code(S_NEGATIVE); }
 "<"     { return left_value_code(S_LESS); }
 ">"     { return left_value_code(S_GREAT); }
 "="     { return left_value_code(S_EQUALS); }
 "<="    { return left_value_code(S_LTE); }
 ">="    { return left_value_code(S_GTE); }
-"~"     { return left_value_code(S_NEGATIVE); }
 "\n"    { yylineno++; }
 
 {DIGIT}+                    { return left_value_identifier(V_ID); }
