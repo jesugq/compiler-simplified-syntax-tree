@@ -123,9 +123,9 @@ signo       : S_NEGATIVE
 Bison has to handle the values that each terminal returns inside of an union. The union value can be one of the following.
 ```c
 %union {
-    int code;               // Integer code of the terminal read.
-    char * identifier;      // String of the idenfitier read.
-    char numtype;           // Type of the identifier, integer or float read.
+    int code;           // Integer code of the terminal read.
+    char * identifier;  // String of the idenfitier read.
+    char numtype;       // Type of the identifier, integer or float read.
     int int_value;      // Integer depiction of the value.
     float float_value;  // Float depicton of the value.
 }
