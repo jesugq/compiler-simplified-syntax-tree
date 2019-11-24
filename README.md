@@ -37,6 +37,8 @@ print   R_PRINT
 /       S_SLASH
 (       S_PARENTL
 )       S_PARENTR
+numint  V_NUMINT
+numflt  V_NUMFLOAT
 <       S_LESS
 >       S_GREATER
 =       S_EQUALS
