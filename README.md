@@ -166,9 +166,17 @@ As such, the tipo, expr, term and factor non terminals return a character which 
 ## Symbol Table Types
 The Symbol Table used uses a simple hash table, implementing Java's hashCode function (https://docs.oracle.com/javase/7/docs/api/java/lang/String.html#hashCode%28%29). Using the following structure to store the values of the hash item.
 
+The union type used for the numeric value of the hash item is the following.
+```c
+typedef union NUMERIC {
+    int int_value;
+    float float_value;
+} NUMERIC;
+```
+
 Each node in the hash table has a hash key, the identifier name, its numeric type, and the value in an union of either an integer or a float, with numtype defines which to use in operations.
 ```c
-typedef struct hash_item {
+typedef struct symbol_item {
     int key;
     char * identifier;      // Name of the item.
     char numtype;           // Type of the item.
@@ -179,9 +187,9 @@ typedef struct hash_item {
 } hash_item;
 ```
 
-These nodes are stored in a hash table, which only saves the integer for its size, its level priority (implemented in the next assignment with functions), and the array of hash items.
+These nodes are stored in a hash table, which stores the integer for its size, the array of hash items, and an integer denoting the recursion level this table is currently in.
 ```c
-typedef struct hash_table {
+typedef struct symbol_table {
     int size;                   // Size of the table.
     int level;                  // Stack level of the table.
     struct hash_item * items;   // Item array of the table.
@@ -191,13 +199,20 @@ typedef struct hash_table {
 ## Syntax Tree Types
 The Syntax Tree uses three node pointers defining what to use, its type, such as an instruction or a value, and an union value regarding the contents of this node, with the type defining how to use them.
 ```c
-typedef struct node {
+typedef struct syntax_node {
+    char nodetype;          // Type of this node, used to handle the data.
     union data {            // Data of this node.
         int instruction;    // Instruction to execute of this node.
         char * identifier;  // Identifier to read of this node.
         int int_value;      // Integer depiction of the value.
-        int float_Value;    // Float depiction of the value.
-        
+        int float_Value;    // Float depiction of the value. 
     }
 } node;
 ```
+
+## Functions Information
+The one recommended by the professor is the following.
+Número
+Tipo
+Número de Parámetros
+Lista de Parámetros

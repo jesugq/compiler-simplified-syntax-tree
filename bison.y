@@ -139,8 +139,6 @@ int yyerror(char const * error) {
     return yyerror;
 }
 
-
-
 /**
  * Main function couples the yyparse, hash table initialize and syntax tree
  * initialize functions along for this assignment.
