@@ -5,10 +5,10 @@
 #include "bison.tab.h"
 
 // Declarations
-int left_value_code(int);
-int left_value_identifier(int);
-int left_value_integer(int);
-int left_value_float(int);
+int flex_left_value_code(int);
+int flex_left_value_identifier(int);
+int flex_left_value_integer(int);
+int flex_left_value_float(int);
 %}
 
 ALPHA   [a-zA-Z]
@@ -16,37 +16,37 @@ DIGIT   [0-9]
 DOT     [.]
 
 %%
-"begin"     { return left_value_code(R_BEGIN); }
-"end"       { return left_value_code(R_END); }
-"var"       { return left_value_code(R_VAR); }
-"int"       { return left_value_code(R_INT); }
-"float"     { return left_value_code(R_FLOAT); }
-"if"        { return left_value_code(R_IF); }
-"ifelse"    { return left_value_code(R_IFELSE); }
-"while"     { return left_value_code(R_WHILE); }
-"read"      { return left_value_code(R_READ); }
-"print"     { return left_value_code(R_PRINT); }
+"begin"     { return flex_left_value_code(R_BEGIN); }
+"end"       { return flex_left_value_code(R_END); }
+"var"       { return flex_left_value_code(R_VAR); }
+"int"       { return flex_left_value_code(R_INT); }
+"float"     { return flex_left_value_code(R_FLOAT); }
+"if"        { return flex_left_value_code(R_IF); }
+"ifelse"    { return flex_left_value_code(R_IFELSE); }
+"while"     { return flex_left_value_code(R_WHILE); }
+"read"      { return flex_left_value_code(R_READ); }
+"print"     { return flex_left_value_code(R_PRINT); }
 
-";"     { return left_value_code(S_SEMICOLON); }
-":"     { return left_value_code(S_COLON); }
-"<-"    { return left_value_code(S_ASSIGN); }
-"+"     { return left_value_code(S_PLUS); }
-"-"     { return left_value_code(S_MINUS); }
-"*"     { return left_value_code(S_ASTERISK); }
-"/"     { return left_value_code(S_SLASH); }
-"("     { return left_value_code(S_PARENTL); }
-")"     { return left_value_code(S_PARENTR); }
-"~"     { return left_value_code(S_NEGATIVE); }
-"<"     { return left_value_code(S_LESS); }
-">"     { return left_value_code(S_GREAT); }
-"="     { return left_value_code(S_EQUALS); }
-"<="    { return left_value_code(S_LTE); }
-">="    { return left_value_code(S_GTE); }
+";"     { return flex_left_value_code(S_SEMICOLON); }
+":"     { return flex_left_value_code(S_COLON); }
+"<-"    { return flex_left_value_code(S_ASSIGN); }
+"+"     { return flex_left_value_code(S_PLUS); }
+"-"     { return flex_left_value_code(S_MINUS); }
+"*"     { return flex_left_value_code(S_ASTERISK); }
+"/"     { return flex_left_value_code(S_SLASH); }
+"("     { return flex_left_value_code(S_PARENTL); }
+")"     { return flex_left_value_code(S_PARENTR); }
+"~"     { return flex_left_value_code(S_NEGATIVE); }
+"<"     { return flex_left_value_code(S_LESS); }
+">"     { return flex_left_value_code(S_GREAT); }
+"="     { return flex_left_value_code(S_EQUALS); }
+"<="    { return flex_left_value_code(S_LTE); }
+">="    { return flex_left_value_code(S_GTE); }
 "\n"    { yylineno++; }
 
-{DIGIT}+                    { return left_value_identifier(V_ID); }
-{DIGIT}*{DOT}{DIGIT}+       { return left_value_integer(V_NUMINT); }
-{ALPHA}({ALPHA}|{DIGIT})*   { return left_value_float(V_NUMFLOAT); }
+{DIGIT}+                    { return flex_left_value_identifier(V_ID); }
+{DIGIT}*{DOT}{DIGIT}+       { return flex_left_value_integer(V_NUMINT); }
+{ALPHA}({ALPHA}|{DIGIT})*   { return flex_left_value_float(V_NUMFLOAT); }
 %%
 
 /**
@@ -55,7 +55,7 @@ DOT     [.]
  * @param   code    Terminal code.
  * @return  Terminal code.
  */
-int left_value_code(int code) {
+int flex_left_value_code(int code) {
     yylval.code = code;
     return code;
 }
@@ -66,7 +66,7 @@ int left_value_code(int code) {
  * @param   code    Terminal code.
  * @return  Terminal code.
  */
-int left_value_identifier(int code) {
+int flex_left_value_identifier(int code) {
     yylval.identifier = strdup(yytext);
     return code;
 }
@@ -77,7 +77,7 @@ int left_value_identifier(int code) {
  * @param   code    Terminal code.
  * @return  Terminal code.
  */
-int left_value_integer(int code) {
+int flex_left_value_integer(int code) {
     yylval.int_value = atoi(yytext);
     return code;
 }
@@ -88,7 +88,7 @@ int left_value_integer(int code) {
  * @param   code    Terminal code.
  * @return  Terminal code.
  */
-int left_value_float(int code) {
+int flex_left_value_float(int code) {
     yylval.float_value = atof(yytext);
     return code;
 }

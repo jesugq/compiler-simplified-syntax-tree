@@ -19,6 +19,7 @@ struct symbol_item * symbol_items_initialize();
 int hash_key(char *);
 int hash_index(int);
 void symbol_table_print(struct symbol_table *);
+void symbol_table_terminate(struct symbol_table *);
 int symbol_table_search(struct symbol_table *, char *);
 bool symbol_table_is_full(struct symbol_table *);
 bool symbol_table_insert(struct symbol_table *, char *, char);
@@ -75,7 +76,7 @@ typedef struct symbol_table {
  */
 struct symbol_table * symbol_table_initialize(int level) {
     struct symbol_table * table;
-    table = (struct symbol_table *)callor(1, sizeof(struct symbol_table));
+    table = (struct symbol_table *)calloc(1, sizeof(struct symbol_table));
     table->size = 0;
     table->level = level;
     table->items = symbol_items_initialize();
@@ -87,7 +88,7 @@ struct symbol_table * symbol_table_initialize(int level) {
  * @return  Initialized symbol item array pointer.
  */
 struct symbol_item * symbol_items_initialize() {
-    struct symbol_items * items;
+    struct symbol_item * items;
     items = (struct symbol_item *)calloc(
         TABLE_SIZE, sizeof(struct symbol_item));
     return items;
@@ -147,6 +148,20 @@ void symbol_table_print(struct symbol_table * table) {
 }
 
 /**
+ * Symbol Table Terminate frees the memory used to allocate this table.
+ * @param   table   Symbol table.
+ */
+void symbol_table_terminate(struct symbol_table * table) {
+    int i;
+    for (i=0; i<TABLE_SIZE; i++) {
+        if (table->items[i].identifier != NULL)
+            free(table->items[i].identifier);
+    }
+    free(table->items);
+    free(table);
+}
+
+/**
  * Symbol Table Is Fulll tells about the occupancy of the symbol table.
  * @param   table   Symbol table.
  * @return  True if the symbol table is full.
@@ -163,7 +178,7 @@ bool symbol_table_is_full(struct symbol_table * table) {
  */
 int symbol_table_search(struct symbol_table * table, char * identifier) {
     int key = hash_key(identifier);
-    int index = hash_key(key);
+    int index = hash_index(key);
     int curr = index;
 
     while (table->items[curr].key != 0) {
@@ -261,9 +276,25 @@ char * symbol_table_get_identifier(struct symbol_table * table, int index) {
  * @param   index   Index of the symbol item.
  * @return  Numtype of the symbol item.
  */
-char symbol_table_get_key(struct symbol_table * table, int index) {
+char symbol_table_get_numtype(struct symbol_table * table, int index) {
     if (index == -1)
-        return NULL;
+        return '\0';
     else
         return table->items[index].numtype;
+}
+
+/**
+ * Retrieves the value of the symbol table item at parameter index.
+ * @param   table   Symbol table.
+ * @param   index   Index of the symbol item.
+ * @return  Value of the symbol item.
+ */
+NUMERIC symbol_table_get_value(struct symbol_table * table, int index) {
+    if (index == -1) {
+        union NUMERIC placeholder;
+        placeholder.int_value = 0;
+        return placeholder;
+    }
+    else
+        return table->items[index].value;
 }

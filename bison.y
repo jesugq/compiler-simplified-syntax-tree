@@ -2,6 +2,7 @@
 // Imports
 #include <stdio.h>
 #include <stdbool.h>
+#include "symbol_table.c"
 
 // Definitions
 #define TYPE_INTEGER    'I'
@@ -21,7 +22,11 @@ extern typedef struct symbol_item symbol_item;
 extern typedef struct symbol_table symbol_table;
 
 // Declarations
-void print_success();
+void bison_parse_success();
+bool bison_table_identifier_exists(char *);
+bool bison_table_identifier_insert(char *);
+void bison_error_identifier_repeated(char *);
+void bison_error_identifier_failed(char *);
 %}
 
 // Bison Union
@@ -51,7 +56,7 @@ void print_success();
 %%
 prog
     : opt_decls R_BEGIN opt_stmts R_END {
-        print_success();
+        bison_parse_success();
     }
 ;
 
@@ -66,7 +71,19 @@ decls
 ;
 
 dec
-    : R_VAR V_ID S_COLON tipo
+    : R_VAR V_ID S_COLON tipo {
+        // Verify that the identifier is unique, then verify that the
+        // identifier was inserted. If neither returns true, YYERROR.
+        if (!bison_table_identifier_exists($2)) {
+            if (!bison_table_identifier_insert($2, $4)){
+                bison_error_identifier_failed($2, $4);
+                YYERROR;
+            }
+        } else {
+            bison_error_identifier_repeated($2);
+            YYERROR;
+        }
+    }
 ;
 
 tipo
@@ -103,12 +120,15 @@ expr
     : expr S_PLUS term
     | expr S_MINUS term
     | signo term
-    | term
+    | termbison_error_identifier_repeated($2);
+                YYERROR;
 ;
 
 term
-    : term S_ASTERISK factor
-    | term S_SLASH factor
+    : termbison_error_identifier_repeated($2);
+                YYERROR;
+    | termbison_error_identifier_repeated($2);
+                YYERROR;
     | factor
 ;
 
@@ -145,6 +165,56 @@ int yyerror(char const * error) {
 }
 
 /**
+ * Bison Parse Success prints an accepted message.
+ */
+void bison_parse_success() {
+    printf("File accepted.\n");
+}
+
+/**
+ * Bison Table Identifier Exists checks if the identifier can be found in the  * symbol table, but not necessarily where it is. Useful for things like
+ * prevention of duplicates.
+ * @param   identifier  String of the identifier.
+ * @return  True if the identifier was found on the symbol table.
+ */
+bool bison_table_identifier_exists(char * identifier) {
+    return symbol_table_search(table, identifier) >= 0;
+}
+
+/**
+ * Bison Table Identifier Insert returns true if insertion of a new node using
+ * the identifier and the numtype was successful.
+ * @param   identifier  String of the identifier.
+ * @param   numtype     Type of the identifier.
+ * @return  True if the insertion was successful.
+ */
+bool bison_table_identifier_insert(char * identifier, char numtype) {
+    return symbol_table_insert(table, identifier, numtype);
+}
+
+/**
+ * Bison Error Identifier Repeated calls the yyerror function with a message of
+ * "variable declared twice: identifier".
+ * @param   identifier  String of the identifier.
+ */
+void bison_error_identifier_repeated(char * identifier) {
+    char error[] = "variable declared twice: "
+    strcat(error, identifier);
+    yyerror(error);
+}
+
+/**
+ * Bison Error Identifier Failed calls the yyerror function with a message of
+ * "variable failed to be inserted: identifier".
+ * @param   identifier  String of the identifier.
+ */
+void bison_error_identifier_failed(char * identifier) {
+    char error[] = "variable failed to be inserted: "
+    strcat(error, identifier);
+    yyerror(error);
+}
+
+/**
  * Main function couples the yyparse, hash table initialize and syntax tree
  * initialize functions along for this assignment.
  * @param   argc    Argument count.
@@ -163,7 +233,11 @@ int main(int argc, char * argv[]) {
         printf("File opened successfully.\n");
 
     // Flex and Bison parsing.
+    struct symbol_table * table;
+    table = symbol_table_initialize(0);
     yyparse();
+    symbol_table_print(table);
+    symbol_table_terminate(table);
 
     // Closure of file and system.
     if (yyin != NULL) fclose(yyin);
