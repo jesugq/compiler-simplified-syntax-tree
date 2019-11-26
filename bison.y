@@ -27,6 +27,7 @@ bool bison_table_identifier_exists(char *);
 bool bison_table_identifier_insert(char *);
 void bison_error_identifier_repeated(char *);
 void bison_error_identifier_failed(char *);
+void bison_error_identifier_missing(char *);
 %}
 
 // Bison Union
@@ -87,8 +88,12 @@ dec
 ;
 
 tipo
-    : R_INT
-    | R_FLOAT
+    : R_INT {
+        $$ = TYPE_INTEGER;
+    }
+    | R_FLOAT {
+        $$ = TYPE_FLOAT;
+    }
 ;
 
 opt_stmts
@@ -210,6 +215,17 @@ void bison_error_identifier_repeated(char * identifier) {
  */
 void bison_error_identifier_failed(char * identifier) {
     char error[] = "variable failed to be inserted: "
+    strcat(error, identifier);
+    yyerror(error);
+}
+
+/**
+ * Bison Error Identifier Missing calls the yyerror function with a message of
+ * "variable not found: identifier".
+ * @param   identifier  String of the identifier.
+ */
+void bison_error_identifier_failed(char * identifier) {
+    char error[] = "variable not found: "
     strcat(error, identifier);
     yyerror(error);
 }
