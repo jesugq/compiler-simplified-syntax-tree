@@ -56,9 +56,7 @@ void bison_error_identifier_missing(char *);
 // Grammar
 %%
 prog
-    : opt_decls R_BEGIN opt_stmts R_END {
-        bison_parse_success();
-    }
+    : opt_decls R_BEGIN opt_stmts R_END
 ;
 
 opt_decls
@@ -72,28 +70,12 @@ decls
 ;
 
 dec
-    : R_VAR V_ID S_COLON tipo {
-        // Verify that the identifier is unique, then verify that the
-        // identifier was inserted. If neither returns true, YYERROR.
-        if (!bison_table_identifier_exists($2)) {
-            if (!bison_table_identifier_insert($2, $4)){
-                bison_error_identifier_failed($2, $4);
-                YYERROR;
-            }
-        } else {
-            bison_error_identifier_repeated($2);
-            YYERROR;
-        }
-    }
+    : R_VAR V_ID S_COLON tipo
 ;
 
 tipo
-    : R_INT {
-        $$ = TYPE_INTEGER;
-    }
-    | R_FLOAT {
-        $$ = TYPE_FLOAT;
-    }
+    : R_INT
+    | R_FLOAT
 ;
 
 opt_stmts
@@ -125,15 +107,12 @@ expr
     : expr S_PLUS term
     | expr S_MINUS term
     | signo term
-    | termbison_error_identifier_repeated($2);
-                YYERROR;
+    | term
 ;
 
 term
-    : termbison_error_identifier_repeated($2);
-                YYERROR;
-    | termbison_error_identifier_repeated($2);
-                YYERROR;
+    : term
+    | term
     | factor
 ;
 
