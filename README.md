@@ -137,9 +137,7 @@ Bison has to handle the values that each terminal returns inside of an union. Th
 %union {
     int code;           // Integer code of the terminal read.
     char * identifier;  // String of the idenfitier read.
-    char numtype;       // Type of the identifier, integer or float read.
-    int int_value;      // Integer depiction of the value.
-    float float_value;  // Float depicton of the value.
+    NUMERIC value       // Value that can either be integer or float.
 }
 ```
 
@@ -148,8 +146,7 @@ Most terminals only return their code number, which is the Bison Union's code at
 ```c
 %token<code>                    // All reserved terminals.
 %token<identifier> V_ID         // Identifier read as a string.
-%token<int_value> V_NUMINT      // Integer value read.
-%token<float_value> V_NUMFLOAT  // Float value read.
+%token<NUMERIC> V_NUMINT        // Integer value read stored as a NUMERIC of type int.
 ```
 
 ## Non Terminal Types
@@ -169,8 +166,11 @@ The Symbol Table used uses a simple hash table, implementing Java's hashCode fun
 The union type used for the numeric value of the hash item is the following.
 ```c
 typedef union NUMERIC {
-    int int_value;
-    float float_value;
+    char numtype;           // Type of the number.
+    union {
+        int int_value;      // Its integer depiction.
+        float float_value;  // Its float depiction.
+    } value;
 } NUMERIC;
 ```
 
@@ -179,11 +179,7 @@ Each node in the hash table has a hash key, the identifier name, its numeric typ
 typedef struct symbol_item {
     int key;
     char * identifier;      // Name of the item.
-    char numtype;           // Type of the item.
-    union value {           // Value of the item.
-        int int_value;      // Integer depiction of the value.
-        float float_value;  // Float depiction of the value.
-    }
+    NUMERIC value;          // Value of the item, its type being inside.
 } hash_item;
 ```
 
@@ -204,8 +200,7 @@ typedef struct syntax_node {
     union data {            // Data of this node.
         int instruction;    // Instruction to execute of this node.
         char * identifier;  // Identifier to read of this node.
-        int int_value;      // Integer depiction of the value.
-        int float_Value;    // Float depiction of the value. 
+        NUMERIC value;      // Value of the item, its type being inside.
     }
 } node;
 ```
