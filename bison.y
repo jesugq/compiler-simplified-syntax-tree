@@ -15,6 +15,11 @@ extern char * yytext;
 extern int yylex();
 extern int yyerror(char const *);
 
+// Symbol Table externals
+extern typedef union NUMERIC NUMERIC;
+extern typedef struct symbol_item symbol_item;
+extern typedef struct symbol_table symbol_table;
+
 // Declarations
 void print_success();
 %}
