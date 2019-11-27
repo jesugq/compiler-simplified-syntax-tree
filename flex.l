@@ -2,8 +2,12 @@
 // Imports
 #include <stdlib.h>
 #include <string.h>
-#include "data.h"
 #include "bison.tab.h"
+
+#ifndef _DATAH_
+#define _DATAH_
+#include "data.h"
+#endif
 
 // Declarations
 int flex_left_value_code(int);
@@ -39,15 +43,15 @@ DOT     [.]
 ")"     { return flex_left_value_code(S_PARENTR); }
 "~"     { return flex_left_value_code(S_NEGATIVE); }
 "<"     { return flex_left_value_code(S_LESS); }
-">"     { return flex_left_value_code(S_GREAT); }
+">"     { return flex_left_value_code(S_GREATER); }
 "="     { return flex_left_value_code(S_EQUALS); }
 "<="    { return flex_left_value_code(S_LTE); }
 ">="    { return flex_left_value_code(S_GTE); }
 "\n"    { yylineno++; }
 
-{DIGIT}+                    { return flex_left_value_identifier(V_ID); }
-{DIGIT}*{DOT}{DIGIT}+       { return flex_left_value_integer(V_NUMINT); }
-{ALPHA}({ALPHA}|{DIGIT})*   { return flex_left_value_float(V_NUMFLOAT); }
+{DIGIT}+                    { return flex_left_value_integer(V_NUMINT); }
+{DIGIT}*{DOT}{DIGIT}+       { return flex_left_value_float(V_NUMFLOAT); }
+{ALPHA}({ALPHA}|{DIGIT})*   { return flex_left_value_identifier(V_ID); }
 %%
 
 /**
@@ -79,7 +83,7 @@ int flex_left_value_identifier(int code) {
  * @return  Terminal code.
  */
 int flex_left_value_integer(int code) {
-    yylval.data = data_create_integer(atoi(yytext));
+    yylval.value = data_create_integer(atoi(yytext));
     return code;
 }
 
@@ -90,6 +94,6 @@ int flex_left_value_integer(int code) {
  * @return  Terminal code.
  */
 int flex_left_value_float(int code) {
-    yylval.data = data_create_float(atof(yytext));
+    yylval.value = data_create_float(atof(yytext));
     return code;
 }

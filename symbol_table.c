@@ -12,7 +12,7 @@
 typedef struct symbol_item {
     int key;
     char * identifier;
-    data_value * value;
+    struct data_value * value;
 } symbol_item;
 
 /**
@@ -24,7 +24,7 @@ typedef struct symbol_item {
 typedef struct symbol_table {
     int size;
     int level;
-    symbol_item * items;
+    struct symbol_item * items;
 } symbol_table;
 
 /**

@@ -4,7 +4,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+
+#ifndef _DATAH_
+#define _DATAH_
 #include "data.h"
+#endif
 
 // Definitions
 #define SYMBOL_NOT_FOUND -1

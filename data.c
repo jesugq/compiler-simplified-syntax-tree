@@ -7,10 +7,10 @@
  * @param   int_value   Integer depiction of this number.
  * @param   float_value Float depiction of this number.
  */
-typedef union data_number {
-    int int_value;
-    float float_value;
-} data_number;
+// typedef union data_number {
+//     int int_value;
+//     float float_value;
+// } data_number;
 
 /**
  * Struct Data Content stores the value of the number that the identifier is 
@@ -18,10 +18,10 @@ typedef union data_number {
  * @param   numtype     Type of the data.
  * @param   number      Value of the data.
  */
-typedef struct data_value {
-    char numtype;
-    union data_number number;
-} data_value;
+// typedef struct data_value {
+//     char numtype;
+//     union data_number number;
+// } data_value;
 
 /**
  * Data Create Integer returns a DATA type using the parameters sent.

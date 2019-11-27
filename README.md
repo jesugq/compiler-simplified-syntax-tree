@@ -18,11 +18,11 @@ Identifiers and numbers have to be recognized via flex using a standard definiti
 ```bash
 flex flex.l
 bison -d bison.y
-gcc bison.tab.c symbol_table.c data.c -lfl -lm -o run.out
+gcc lex.yy.c bison.tab.c symbol_table.c data.c -lfl -lm -o run.out
 ./runout file.txt
 
 # Or the short version
-flex flex.l && bison -d bison.y && gcc bison.tab.c symbol_table.c data.c -lfl -lm -o run.out
+flex flex.l && bison -d bison.y && gcc lex.yy.c bison.tab.c symbol_table.c data.c -lfl -lm -o run.out
 ```
 
 ## Terminal Nomenclature

@@ -2,14 +2,21 @@
 // Imports
 #include <stdio.h>
 #include <stdbool.h>
-#include "data.h"
 #include "symbol_table.h"
+
+#ifndef _DATAH_
+#define _DATAH_
+#include "data.h"
+#endif
 
 // Declarations
 #define OPERATION_SUM '+'
 #define OPERATION_SUBSTRACT '-'
 #define OPERATION_MULTIPLY '*'
 #define OPERATION_DIVIDE '/'
+
+// Global Table
+symbol_table * table;
 
 // Flex externals
 extern FILE * yyin;
@@ -21,20 +28,17 @@ extern int yyerror(char const *);
 // Declarations
 void bison_parse_success();
 bool bison_table_identifier_exists(char *);
-bool bison_table_identifier_insert(char *, data_value);
+bool bison_table_identifier_insert(char *, data_value *);
 data_value * bison_table_identifier_data(char *);
-bool bison_data_numtype_match(data_value, data_value);
-data_value * bison_data_value_operation(
-    data_value, data_value, char);
-data_value * bison_data_value_negative(data_value);
-data_value * bison_data_integer_operation(
-    data_value, data_value, char);
-data_value * bison_data_float_operation(
-    data_value, data_value, char);
+bool bison_data_numtype_match(data_value *, data_value *);
+data_value * bison_data_value_operation(data_value *, data_value *, char);
+data_value * bison_data_value_negative(data_value *);
+data_value * bison_data_integer_operation(data_value *, data_value *, char);
+data_value * bison_data_float_operation(data_value *, data_value *, char);
 void bison_error_identifier_repeated(char *);
 void bison_error_identifier_failed(char *);
 void bison_error_identifier_missing(char *);
-void bison_error_data_mismatch(data_value, data_value);
+void bison_error_data_mismatch(data_value *, data_value *);
 %}
 
 // Bison Union
@@ -42,7 +46,7 @@ void bison_error_data_mismatch(data_value, data_value);
     int code;
     char * identifier;
     char numtype;
-    data_value * value;
+    struct data_value * value;
 }
 
 // Bison Terminal Types
@@ -149,7 +153,7 @@ signo
  * @return  Integer code error.
  */
 int yyerror(char const * error) {
-    printf("%s found after reading '%s' at line %d.\n",
+    printf("\n%s found after reading '%s' at line %d.\n",
         error, yytext, yylineno);
 }
 
@@ -187,9 +191,9 @@ bool bison_table_identifier_insert(char * identifier, data_value * value) {
  * @return  Data of the identifier.
  */
 data_value * bison_table_identifier_data(char * identifier) {
-    int index = symbol_table_search(identifier);
+    int index = symbol_table_search(table, identifier);
     if (index == SYMBOL_NOT_FOUND) return data_create_integer(0);
-    else return symbol_table_get_data(index);
+    else return symbol_table_get_data(table, index);
 }
 
 /**
@@ -230,8 +234,8 @@ data_value * bison_data_value_operation(
  */
 data_value * bison_data_value_negative(data_value * one) {
     switch(one->numtype) {
-        case TYPE_INTEGER: return data_create_integer(one->value.int_value * -1);
-        case TYPE_FLOAT: return data_create_float(one->value.float_value * -1);
+        case TYPE_INTEGER: return data_create_integer(one->number.int_value * -1);
+        case TYPE_FLOAT: return data_create_float(one->number.float_value * -1);
         default: return data_create_float(0);
     }
 }
@@ -250,19 +254,19 @@ data_value * bison_data_integer_operation(
     switch(operation) {
         case OPERATION_SUM:
             return data_create_integer(
-                one->value.int_value + two->value.int_value
+                one->number.int_value + two->number.int_value
             );
         case OPERATION_SUBSTRACT:
             return data_create_integer(
-                one->value.int_value - two->value.int_value
+                one->number.int_value - two->number.int_value
             );
         case OPERATION_MULTIPLY:
             return data_create_integer(
-                one->value.int_value * two->value.int_value
+                one->number.int_value * two->number.int_value
             );
         case OPERATION_DIVIDE:
             return data_create_integer(
-                one->value.int_value / two->value.int_value
+                one->number.int_value / two->number.int_value
             );
         default:
             return data_create_integer(0);
@@ -283,19 +287,19 @@ data_value * bison_data_float_operation(
     switch(operation) {
         case OPERATION_SUM:
             return data_create_float(
-                one->value.float_value + two->value.float_value
+                one->number.float_value + two->number.float_value
             );
         case OPERATION_SUBSTRACT:
             return data_create_float(
-                one->value.float_value - two->value.float_value
+                one->number.float_value - two->number.float_value
             );
         case OPERATION_MULTIPLY:
             return data_create_float(
-                one->value.float_value * two->value.float_value
+                one->number.float_value * two->number.float_value
             );
         case OPERATION_DIVIDE:
             return data_create_float(
-                one->value.float_value / two->value.float_value
+                one->number.float_value / two->number.float_value
             );
         default:
             return data_create_float(0);
@@ -329,7 +333,7 @@ void bison_error_identifier_failed(char * identifier) {
  * "variable not found: identifier".
  * @param   identifier  String of the identifier.
  */
-void bison_error_identifier_failed(char * identifier) {
+void bison_error_identifier_missing(char * identifier) {
     char error[] = "variable not found: ";
     strcat(error, identifier);
     yyerror(error);
@@ -367,20 +371,19 @@ int main(int argc, char * argv[]) {
     if (argc < 2) {
         printf("No file argument provided.\n");
         return 1;
-    } else if (yyin = fopen(argv[1], "r") == NULL) {
+    } else if ((yyin = fopen(argv[1], "r")) == NULL) {
         printf("Failed to open file.\n");
         return 1;
-    } else
-        printf("File opened successfully.\n");
+    }
 
     // Flex and Bison parsing.
-    symbol_table * table;
     table = symbol_table_initialize(0);
     yyparse();
-    symbol_table_print(table);
+    printf("\n\n");
+    // symbol_table_print(table);
     symbol_table_terminate(table);
 
     // Closure of file and system.
     if (yyin != NULL) fclose(yyin);
-    return 0,
+    return 0;
 }
