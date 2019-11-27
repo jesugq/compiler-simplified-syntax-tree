@@ -61,7 +61,7 @@ void bison_error_data_mismatch(data_value *, data_value *);
 %token<value> V_NUMFLOAT
 
 // Bison Non Terminal Types
-// %type<value> tipo expr term factor
+%type<value> tipo expr term factor
 
 // Grammar
 %%
@@ -80,12 +80,29 @@ decls
 ;
 
 dec
-    : R_VAR V_ID S_COLON tipo
+    : R_VAR V_ID S_COLON tipo {
+        // Create an unique symbol table item if the table is not full.
+        if (!bison_table_identifier_exists($2)) {
+            if (!bison_table_identifier_insert($2, $4)) {
+                bison_error_identifier_failed($2);
+                YYERROR;
+            }
+        } else {
+            bison_error_identifier_repeated($2);
+            YYERROR;
+        }
+    }
 ;
 
 tipo
-    : R_INT
-    | R_FLOAT
+    : R_INT {
+        // Return a zero initialized integer data type.
+        $$ = data_create_integer(0);
+    }
+    | R_FLOAT {
+        // Return a zero initialized float data type.
+        $$ = data_create_float(0);
+    }
 ;
 
 opt_stmts
@@ -114,21 +131,67 @@ expression
 ;
 
 expr
-    : expr S_PLUS term
-    | expr S_MINUS term
-    | signo term
+    : expr S_PLUS term {
+        // Return a data type of the sum of expr and term.
+        if (bison_data_numtype_match($1, $3))
+            $$ = bison_data_value_operation($1, $3, OPERATION_SUM);
+        else {
+            bison_error_data_mismatch($1, $3);
+            YYERROR;
+        }
+    }
+    | expr S_MINUS term {
+        // Return a data type of the substraction of expr and term.
+        if (bison_data_numtype_match($1, $3))
+            $$ = bison_data_value_operation($1, $3, OPERATION_SUBSTRACT);
+        else {
+            bison_error_data_mismatch($1, $3);
+            YYERROR;
+        }
+    }
+    | signo term {
+        // Return a data type of the negative equivalent of term.
+        $$ = bison_data_value_negative($2);
+    }
     | term
 ;
 
 term
-    : term S_ASTERISK factor
-    | term S_SLASH factor
+    : term S_ASTERISK factor {
+        // Return a data type of the multiplication of term and factor.
+        if (bison_data_numtype_match($1, $3))
+            $$ = bison_data_value_operation($1, $3, OPERATION_MULTIPLY);
+        else {
+            bison_error_data_mismatch($1, $3);
+            YYERROR;
+        }
+    }
+    | term S_SLASH factor {
+        // Return a data type of the division of term and factor.
+        if (bison_data_numtype_match($1, $3))
+            $$ = bison_data_value_operation($1, $3, OPERATION_DIVIDE);
+        else {
+            bison_error_data_mismatch($1, $3);
+            YYERROR;
+        }
+    }
     | factor
 ;
 
 factor
-    : S_PARENTL expr S_PARENTR
-    | V_ID
+    : S_PARENTL expr S_PARENTR {
+        // Return the data type in between the parentheses.
+        $$ = $2;
+    }
+    | V_ID {
+        // Return the data type in the symbol table with identifier V_ID.
+        if (bison_table_identifier_exists($1))
+            $$ = bison_table_identifier_data($1);
+        else {
+            bison_error_identifier_missing($1);
+            YYERROR;
+        }
+    }
     | V_NUMINT
     | V_NUMFLOAT
 ;
@@ -379,9 +442,7 @@ int main(int argc, char * argv[]) {
     // Flex and Bison parsing.
     table = symbol_table_initialize(0);
     yyparse();
-    printf("\n\n");
-    // symbol_table_print(table);
-    symbol_table_terminate(table);
+    symbol_table_print(table);
 
     // Closure of file and system.
     if (yyin != NULL) fclose(yyin);

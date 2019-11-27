@@ -83,6 +83,47 @@ int hash_index(int key) {
 }
 
 /**
+ * Simple print function to format and print the contents of the symbol table.
+ * @param   table   Symbol table.
+ */
+void symbol_table_print(symbol_table * table) {
+    int i;
+    char typei[] = "integer";
+    char typef[] = "float";
+    char typen[] = "unknown";
+    char headerp[] = "pos";
+    char headerk[] = "key";
+    char headeri[] = "name";
+    char headert[] = "type";
+    char headerv[] = "value";
+
+    printf("\n");
+    printf("Symbol Table:\n");
+    printf("%4s%10s%10s%10s%10s", headerp, headerk, headeri, headert, headerv);
+    printf("\n\n");
+    
+    for (i=0; i<TABLE_SIZE; i++) {
+        if (table->items[i].value != NULL) {
+        printf("[%2d]", i);
+        printf("%10d", table->items[i].key);
+        printf("%10s", table->items[i].identifier);
+            if (table->items[i].value->numtype == TYPE_INTEGER) {
+                printf("%10s", typei);
+                printf("%10d", table->items[i].value->number.int_value);
+            } else if (table->items[i].value->numtype == TYPE_FLOAT) {
+                printf("%10s", typef);
+                printf("%10f", table->items[i].value->number.float_value);
+            } else {
+                printf("%10s", typen);
+                printf("%10d", 0);
+            }
+        printf("\n");
+        }
+    }
+    printf("\n");
+}
+
+/**
  * Symbol Table Terminate frees the memory used to allocate this table.
  * @param   table   Symbol table.
  */
@@ -151,6 +192,7 @@ bool symbol_table_insert(
     item.key = key;
     item.identifier = identifier;
     item.value = value;
+    table->items[curr] = item;
     return true;
 }
 

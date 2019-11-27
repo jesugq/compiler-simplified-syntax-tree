@@ -1,4 +1,4 @@
-var x: int;
+var x: int
 begin
     x <- 1;
     while (x < 5)

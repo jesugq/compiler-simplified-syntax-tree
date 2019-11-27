@@ -20,7 +20,7 @@ symbol_table * symbol_table_initialize();
 symbol_item * symbol_items_initialize();
 int hash_key(char *);
 int hash_index(int);
-// void symbol_table_print(symbol_table *);
+void symbol_table_print(symbol_table *);
 void symbol_table_terminate(symbol_table *);
 int symbol_table_search(symbol_table *, char *);
 bool symbol_table_is_full(symbol_table *);
