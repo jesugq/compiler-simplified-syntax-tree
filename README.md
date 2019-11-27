@@ -163,15 +163,17 @@ As such, the tipo, expr, term and factor non terminals return a character which 
 ## Symbol Table Types
 The Symbol Table used uses a simple hash table, implementing Java's hashCode function (https://docs.oracle.com/javase/7/docs/api/java/lang/String.html#hashCode%28%29). Using the following structure to store the values of the hash item.
 
-The union type used for the numeric value of the hash item is the following.
+The union type used for the numeric value of the hash item are the following.
 ```c
-typedef union NUMERIC {
-    char numtype;           // Type of the number.
-    union {
-        int int_value;      // Its integer depiction.
-        float float_value;  // Its float depiction.
-    } value;
-} NUMERIC;
+typedef union NUMBER {
+    int int_value;      // Integer depiction of a number.
+    float float_value;  // Float depiction of a number.
+} NUMBER;
+
+typedef union DATA {
+    char numtype;       // Type of the data.
+    union NUMBER value; // Value of the data.
+} DATA;
 ```
 
 Each node in the hash table has a hash key, the identifier name, its numeric type, and the value in an union of either an integer or a float, with numtype defines which to use in operations.
@@ -179,7 +181,7 @@ Each node in the hash table has a hash key, the identifier name, its numeric typ
 typedef struct symbol_item {
     int key;
     char * identifier;      // Name of the item.
-    NUMERIC value;          // Value of the item, its type being inside.
+    DATA value;             // Data of the item.
 } hash_item;
 ```
 
@@ -200,7 +202,7 @@ typedef struct syntax_node {
     union data {            // Data of this node.
         int instruction;    // Instruction to execute of this node.
         char * identifier;  // Identifier to read of this node.
-        NUMERIC value;      // Value of the item, its type being inside.
+        DATA value;         // Data of the item.
     }
 } node;
 ```

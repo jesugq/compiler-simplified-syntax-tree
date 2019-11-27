@@ -2,11 +2,7 @@
 // Imports
 #include <stdio.h>
 #include <stdbool.h>
-#include "symbol_table.c"
-
-// Definitions
-#define TYPE_INTEGER    'I'
-#define TYPE_FLOAT      'F'
+#include "symbol_table.h"
 
 // Flex externals
 extern FILE * yyin;
@@ -15,11 +11,6 @@ extern int yylineno;
 extern char * yytext;
 extern int yylex();
 extern int yyerror(char const *);
-
-// Symbol Table externals
-extern typedef union NUMERIC NUMERIC;
-extern typedef struct symbol_item symbol_item;
-extern typedef struct symbol_table symbol_table;
 
 // Declarations
 void bison_parse_success();
@@ -35,8 +26,7 @@ void bison_error_identifier_missing(char *);
     int code;
     char * identifier;
     char numtype;
-    int int_value;
-    float float_value;
+    DATA data;
 }
 
 // Bison Terminal Types
@@ -47,11 +37,11 @@ void bison_error_identifier_missing(char *);
 %token<code> S_PARENTL S_PARENTR S_NEGATIVE
 %token<code> S_LESS S_GREATER S_EQUALS S_LTE S_GTE
 %token<identifier> V_ID
-%token<int_value> V_NUMINT
-%token<float_value> V_NUMFLOAT
+%token<DATA> V_NUMINT
+%token<DATA> V_NUMFLOAT
 
 // Bison Non Terminal Types
-%type<numtype> tipo expr term factor
+%type<DATA> tipo expr term factor
 
 // Grammar
 %%

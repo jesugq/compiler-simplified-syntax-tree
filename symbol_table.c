@@ -4,70 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-
-// Definitions
-#define TABLE_SIZE      20
-#define TYPE_INTEGER    'I'
-#define TYPE_FLOAT      'F'
-
-// Declarations
-typedef union NUMERIC NUMERIC;
-typedef struct symbol_item symbol_item;
-typedef struct symbol_table symbol_table;
-struct symbol_table * symbol_table_initialize();
-struct symbol_item * symbol_items_initialize();
-int hash_key(char *);
-int hash_index(int);
-void symbol_table_print(struct symbol_table *);
-void symbol_table_terminate(struct symbol_table *);
-int symbol_table_search(struct symbol_table *, char *);
-bool symbol_table_is_full(struct symbol_table *);
-bool symbol_table_insert(struct symbol_table *, char *, char);
-bool symbol_table_assign(struct symbol_table *, int, NUMERIC);
-int symbol_table_get_key(struct symbol_table *, int);
-char * symbol_table_get_identifier(struct symbol_table *, int);
-char symbol_table_get_numtype(struct symbol_table *, int);
-NUMERIC symbol_table_get_value(struct symbol_table *, int);
-
-/**
- * Numeric is an union that denotes how the numeric values of the node should be
- * handled, as an integer or as a float. The code knows how to use this value by
- * using the numtype attribute in the node.
- * @param   int_value   Integer depiction of this node's value. 
- * @param   float_value Float depiction of this node's value.
- */
-typedef union NUMERIC {
-    int int_value;
-    float float_value;
-} NUMERIC;
-
-/**
- * Symbols Item is each instance of a possible symbol item. It includes its hash
- * key, the identifier string, its numtype and the value union, which can be
- * accessed depending on the numtype.
- * @param   key         Hash key of this node.
- * @param   identifier  String identifier of this node.
- * @param   numtype     Numerical type of this node.
- * @param   value       Union value of this node.
- */
-typedef struct symbol_item {
-    int key;
-    char * identifier;
-    char numtype;
-    union NUMERIC value;
-} symbol_item;
-
-/**
- * Symbol Table stores the array of symbol_items and the size of said array.
- * @param   size    Size of the table.
- * @param   level   Recursion level this table is in.
- * @param   items   Items of the table.    
- */
-typedef struct symbol_table {
-    int size;
-    int level;
-    struct symbol_item * items;
-} symbol_table;
+#include "symbol_table.h"
 
 /**
  * Symbol Table Initialize returns the allocated symbol table.
@@ -132,15 +69,22 @@ void symbol_table_print(struct symbol_table * table) {
     int i;
     printf("%4s|%12s|%12s|%12s|\n", "-", "-", "-", "-");
     for (i=0; i<TABLE_SIZE; i++) {
-        printf("[%2d]|%12d|%12s|",
+        printf(
+            "[%2d]|%12d|%12s|",
             i,
             table->items[i].key,
             table->items[i].identifier
         );
-        if (table->items[i].numtype == TYPE_INTEGER)
-            printf("%5s|%12d|\n", "int", table->items[i].value.int_value);
-        else if (table->items[i].numtype == TYPE_FLOAT)
-            printf("%5s|%12f|\n", "float", table->items[i].value.float_value);
+        if (table->items[i].data.numtype == TYPE_INTEGER)
+            printf(
+                "%5s|%12d|\n", "int",
+                table->items[i].data.value.int_value
+            );
+        else if (table->items[i].data.numtype == TYPE_FLOAT)
+            printf(
+                "%5s|%12f|\n", "float",
+                table->items[i].data.value.float_value
+            );
         else
             printf("%5s|%12d|\n", "none", 0);
     }
@@ -215,31 +159,31 @@ bool symbol_table_insert(
     struct symbol_item item;
     item.key = key;
     item.identifier = identifier;
-    item.numtype = numtype;
-    if (item.numtype == TYPE_INTEGER)
-        item.value.int_value = 0;
-    else if (item.numtype == TYPE_FLOAT)
-        item.value.float_value = 0;
+    item.data.numtype = numtype;
+    if (item.data.numtype == TYPE_INTEGER)
+        item.data.value.int_value = 0;
+    else if (item.data.numtype == TYPE_FLOAT)
+        item.data.value.float_value = 0;
     else
-        item.value.int_value = 0;
+        item.data.value.int_value = 0;
     return true;
 }
 
 /**
- * Symbol Table Assign changes the value of the table item whose identifier
+ * Symbol Table Assign changes the data of the table item whose identifier
  * matches, and uses either int_value or float_value depending on its type.
  * @param   table       Symbol table.
  * @param   index       Index of the symbol item.
- * @param   value       Integer or Float value of the identifier.
+ * @param   data        Data of the identifier.
  * @return  True if the assignment was successful.
  */
 bool symbol_table_assign(
-    struct symbol_table * table, int index, NUMERIC value
+    struct symbol_table * table, int index, DATA data
 ) {
     if (index == -1)
         return false;
     else {
-        table->items[index].value = value;
+        table->items[index].data = data;
         return true;
     }
 }
@@ -280,21 +224,22 @@ char symbol_table_get_numtype(struct symbol_table * table, int index) {
     if (index == -1)
         return '\0';
     else
-        return table->items[index].numtype;
+        return table->items[index].data.numtype;
 }
 
 /**
- * Retrieves the value of the symbol table item at parameter index.
+ * Retrieves the data of the symbol table item at parameter index.
  * @param   table   Symbol table.
  * @param   index   Index of the symbol item.
- * @return  Value of the symbol item.
+ * @return  Data of the symbol item.
  */
-NUMERIC symbol_table_get_value(struct symbol_table * table, int index) {
+DATA symbol_table_get_data(struct symbol_table * table, int index) {
     if (index == -1) {
-        union NUMERIC placeholder;
-        placeholder.int_value = 0;
+        union DATA placeholder;
+        placeholder.numtype = TYPE_INTEGER;
+        placeholder.value.int_value = 0;
         return placeholder;
     }
     else
-        return table->items[index].value;
+        return table->items[index].data;
 }

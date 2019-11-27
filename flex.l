@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "bison.tab.h"
+#include "symbol_table.h"
 
 // Declarations
 int flex_left_value_code(int);
@@ -78,7 +79,10 @@ int flex_left_value_identifier(int code) {
  * @return  Terminal code.
  */
 int flex_left_value_integer(int code) {
-    yylval.int_value = atoi(yytext);
+    union DATA data;
+    data.numtype = TYPE_INTEGER;
+    data.value.int_value = atoi(yytext);
+    yylval.data = data;
     return code;
 }
 
@@ -89,6 +93,9 @@ int flex_left_value_integer(int code) {
  * @return  Terminal code.
  */
 int flex_left_value_float(int code) {
-    yylval.float_value = atof(yytext);
+    union DATA data;
+    data.numtype = TYPE_FLOAT;
+    data.value.float_value = atof(yytext);
+    yylval.data = data;
     return code;
 }
