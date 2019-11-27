@@ -39,6 +39,7 @@ void bison_error_identifier_repeated(char *);
 void bison_error_identifier_failed(char *);
 void bison_error_identifier_missing(char *);
 void bison_error_data_mismatch(data_value *, data_value *);
+void bison_error_data_misassign(char *, data_value *, data_value *);
 %}
 
 // Bison Union
@@ -81,14 +82,15 @@ decls
 
 dec
     : R_VAR V_ID S_COLON tipo {
-        // Create an unique symbol table item if the table is not full.
-        if (!bison_table_identifier_exists($2)) {
-            if (!bison_table_identifier_insert($2, $4)) {
-                bison_error_identifier_failed($2);
-                YYERROR;
-            }
-        } else {
+        // Verify the identifier is unique.
+        if (bison_table_identifier_exists($2)) {
             bison_error_identifier_repeated($2);
+            YYERROR;
+        }
+
+        // Verify that the identifier was inserted.
+        if (!bison_table_identifier_insert($2, $4)) {
+            bison_error_identifier_failed($2);
             YYERROR;
         }
     }
@@ -116,7 +118,20 @@ stmt_lst
 ;
 
 stmt
-    : V_ID S_ASSIGN expr
+    : V_ID S_ASSIGN expr {
+        // Verify that the identifier exists.
+        if (!bison_table_identifier_exists($1)) {
+            bison_error_identifier_missing($1);
+            YYERROR;
+        }
+
+        // Type check the identifier's data and the expr
+        data_value * id = bison_table_identifier_data($1);
+        if (!bison_data_numtype_match(id, $3)) {
+            bison_error_data_misassign($1, id, $3);
+            YYERROR;
+        }
+    }
     | R_IF S_PARENTL expression S_PARENTR stmt
     | R_IFELSE S_PARENTL expression S_PARENTR stmt stmt
     | R_WHILE S_PARENTL expression S_PARENTR stmt
@@ -127,30 +142,39 @@ stmt
 
 expression
     : expr
-    | expr relop expr
+    | expr relop expr {
+        // Type check expr and expr
+        if (!bison_data_numtype_match($1, $3)) {
+            bison_error_data_mismatch($1, $3);
+            YYERROR;
+        }
+    }
 ;
 
 expr
     : expr S_PLUS term {
-        // Return a data type of the sum of expr and term.
-        if (bison_data_numtype_match($1, $3))
-            $$ = bison_data_value_operation($1, $3, OPERATION_SUM);
-        else {
+        // Type check expr and term
+        if (!bison_data_numtype_match($1, $3)) {
             bison_error_data_mismatch($1, $3);
             YYERROR;
         }
+
+        // Return the operation of both.
+        $$ = bison_data_value_operation($1, $3, OPERATION_SUM);
+
     }
     | expr S_MINUS term {
-        // Return a data type of the substraction of expr and term.
-        if (bison_data_numtype_match($1, $3))
-            $$ = bison_data_value_operation($1, $3, OPERATION_SUBSTRACT);
-        else {
+        // Type check expr and term
+        if (!bison_data_numtype_match($1, $3)) {
             bison_error_data_mismatch($1, $3);
             YYERROR;
         }
+
+        // Return the operation of both.
+        $$ = bison_data_value_operation($1, $3, OPERATION_SUBSTRACT);
     }
     | signo term {
-        // Return a data type of the negative equivalent of term.
+        // Return the operation of the single term.
         $$ = bison_data_value_negative($2);
     }
     | term
@@ -158,39 +182,42 @@ expr
 
 term
     : term S_ASTERISK factor {
-        // Return a data type of the multiplication of term and factor.
-        if (bison_data_numtype_match($1, $3))
-            $$ = bison_data_value_operation($1, $3, OPERATION_MULTIPLY);
-        else {
+        // Type check term and factor.
+        if (!bison_data_numtype_match($1, $3)) {
             bison_error_data_mismatch($1, $3);
             YYERROR;
         }
+
+        // Return the operation of both.
+        $$ = bison_data_value_operation($1, $3, OPERATION_MULTIPLY);
     }
     | term S_SLASH factor {
-        // Return a data type of the division of term and factor.
-        if (bison_data_numtype_match($1, $3))
-            $$ = bison_data_value_operation($1, $3, OPERATION_DIVIDE);
-        else {
+        // Type check term and factor.
+        if (!bison_data_numtype_match($1, $3)) {
             bison_error_data_mismatch($1, $3);
             YYERROR;
         }
+
+        // Return the operation of both.
+        $$ = bison_data_value_operation($1, $3, OPERATION_DIVIDE);
     }
     | factor
 ;
 
 factor
     : S_PARENTL expr S_PARENTR {
-        // Return the data type in between the parentheses.
+        // Return the data between the parentheses.
         $$ = $2;
     }
     | V_ID {
-        // Return the data type in the symbol table with identifier V_ID.
-        if (bison_table_identifier_exists($1))
-            $$ = bison_table_identifier_data($1);
-        else {
+        // Verify that the identifier exists.
+        if (!bison_table_identifier_exists($1)) {
             bison_error_identifier_missing($1);
             YYERROR;
         }
+
+        // Return the data of the identifier.
+        $$ = bison_table_identifier_data($1);
     }
     | V_NUMINT
     | V_NUMFLOAT
@@ -375,7 +402,7 @@ data_value * bison_data_float_operation(
  * @param   identifier  String of the identifier.
  */
 void bison_error_identifier_repeated(char * identifier) {
-    char error[] = "variable declared twice: ";
+    char error[1000] = "variable declared twice: ";
     strcat(error, identifier);
     yyerror(error);
 }
@@ -386,7 +413,7 @@ void bison_error_identifier_repeated(char * identifier) {
  * @param   identifier  String of the identifier.
  */
 void bison_error_identifier_failed(char * identifier) {
-    char error[] = "variable failed to be inserted: ";
+    char error[1000] = "variable failed to be inserted: ";
     strcat(error, identifier);
     yyerror(error);
 }
@@ -397,28 +424,92 @@ void bison_error_identifier_failed(char * identifier) {
  * @param   identifier  String of the identifier.
  */
 void bison_error_identifier_missing(char * identifier) {
-    char error[] = "variable not found: ";
+    char error[1000] = "variable not found: ";
     strcat(error, identifier);
     yyerror(error);
 }
 
 /**
- * Bison Error Identifier Missing calls the yyerror function with a message of
- * "operation between different types: one and two".
- * @param   identifier  String of the identifier.
+ * Bison Error Data Mismatch calls the yyerror function with a message of
+ * "illegal operation of: one and two".
+ * @param   one     First data type.
+ * @param   two     Second data type.
  */
 void bison_error_data_mismatch(data_value * one, data_value * two) {
-    char error[] = "variable not found: ";
+    char error[1000] = "illegal operation of ";
+    char hold[1000];
     char erra[] = " and ";
+    char erri[] = "int:";
+    char errf[] = "float:";
+    char errn[] = "unknown";
+
+    if (one->numtype == TYPE_INTEGER) {
+        strcat(error, erri);
+        sprintf(hold, "%d", one->number.int_value);
+        strcat(error, hold);
+    }
+    else if (one->numtype == TYPE_FLOAT) {
+        strcat(error, errf);
+        sprintf(hold, "%f", one->number.float_value);
+        strcat(error, hold);
+    }
+    else strcat(error, errn);
+
+    strcat(error, erra);
+
+    if (two->numtype == TYPE_INTEGER) {
+        strcat(error, erri);
+        sprintf(hold, "%d", two->number.int_value);
+        strcat(error, hold);
+    }
+    else if (two->numtype == TYPE_FLOAT) {
+        strcat(error, errf);
+        sprintf(hold, "%f", two->number.float_value);
+        strcat(error, hold);
+    }
+    else strcat(error, errn);
+
+    yyerror(error);
+}
+
+/**
+ * Bison Error Identifier Missing calls the yyerror function with a message of
+ * "illegal assignment of one <- two".
+ * @param   identifier  Identifier of the first data type.
+ * @param   one         First data type.
+ * @param   two         Second data type.
+ */
+void bison_error_data_misassign(
+    char * identifier, data_value * one, data_value * two
+) {
+    char error[1000] = "illegal assignment of ";
+    char hold[1000];
+    char errc[] = ":";
+    char erra[] = " <- ";
     char erri[] = "int";
-    char errf[] = "float";
+    char errf[] = "float:";
+    char errn[] = "unknown";
+
     if (one->numtype == TYPE_INTEGER) strcat(error, erri);
     else if (one->numtype == TYPE_FLOAT) strcat(error, errf);
-    else strcat(error, erri);
+    else strcat(error, errn);
+
+    strcat(error, errc);
+    strcat(error, identifier);
     strcat(error, erra);
-    if (two->numtype == TYPE_INTEGER) strcat(error, erri);
-    else if (two->numtype == TYPE_FLOAT) strcat(error, errf);
-    else strcat(error, erri);
+
+    if (two->numtype == TYPE_INTEGER) {
+        strcat(error, erri);
+        sprintf(hold, "%d", two->number.int_value);
+        strcat(error, hold);
+    }
+    else if (two->numtype == TYPE_FLOAT) {
+        strcat(error, errf);
+        sprintf(hold, "%f", two->number.float_value);
+        strcat(error, hold);
+    }
+    else strcat(error, errn);
+
     yyerror(error);
 }
 
