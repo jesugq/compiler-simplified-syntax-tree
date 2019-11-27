@@ -14,6 +14,17 @@ Variables must be declared before use exactly once. If a variable is used and no
 
 Identifiers and numbers have to be recognized via flex using a standard definition, including negative numbers.
 
+## Compilation
+```bash
+flex flex.l
+bison -d bison.y
+gcc bison.tab.c symbol_table.c data.c -lfl -lm -o run.out
+./runout file.txt
+
+# Or the short version
+flex flex.l && bison -d bison.y && gcc bison.tab.c symbol_table.c data.c -lfl -lm -o run.out
+```
+
 ## Terminal Nomenclature
 These are the names that will be used to refer to the lexicon in both Flex and Bison. Note that the prefix R stands for Reserved Words, S stands for Symbols, and V for Values.
 
@@ -137,7 +148,7 @@ Bison has to handle the values that each terminal returns inside of an union. Th
 %union {
     int code;           // Integer code of the terminal read.
     char * identifier;  // String of the idenfitier read.
-    NUMERIC value       // Value that can either be integer or float.
+    data_value value    // Value that can either be integer or float.
 }
 ```
 
@@ -165,23 +176,23 @@ The Symbol Table used uses a simple hash table, implementing Java's hashCode fun
 
 The union type used for the numeric value of the hash item are the following.
 ```c
-typedef union NUMBER {
+typedef union data_number {
     int int_value;      // Integer depiction of a number.
     float float_value;  // Float depiction of a number.
-} NUMBER;
+} data_number;
 
-typedef union DATA {
-    char numtype;       // Type of the data.
-    union NUMBER value; // Value of the data.
-} DATA;
+typedef struct data_value {
+    char numtype;               // Type of the data.
+    data_number number;         // Value of the data.
+} data_value;
 ```
 
 Each node in the hash table has a hash key, the identifier name, its numeric type, and the value in an union of either an integer or a float, with numtype defines which to use in operations.
 ```c
 typedef struct symbol_item {
     int key;
-    char * identifier;      // Name of the item.
-    DATA value;             // Data of the item.
+    char * identifier;          // Name of the item.
+    data_value data;            // Data of the item.
 } hash_item;
 ```
 
@@ -190,7 +201,7 @@ These nodes are stored in a hash table, which stores the integer for its size, t
 typedef struct symbol_table {
     int size;                   // Size of the table.
     int level;                  // Stack level of the table.
-    struct hash_item * items;   // Item array of the table.
+    hash_item * items;          // Item array of the table.
 } hash_table;
 ```
 
@@ -198,11 +209,11 @@ typedef struct symbol_table {
 The Syntax Tree uses three node pointers defining what to use, its type, such as an instruction or a value, and an union value regarding the contents of this node, with the type defining how to use them.
 ```c
 typedef struct syntax_node {
-    char nodetype;          // Type of this node, used to handle the data.
-    union data {            // Data of this node.
-        int instruction;    // Instruction to execute of this node.
-        char * identifier;  // Identifier to read of this node.
-        DATA value;         // Data of the item.
+    char nodetype;              // Type of this node, used to handle the data.
+    union data {                // Data of this node.
+        int instruction;        // Instruction to execute of this node.
+        char * identifier;      // Identifier to read of this node.
+        data_value data;        // Data of the item.
     }
 } node;
 ```

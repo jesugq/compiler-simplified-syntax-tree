@@ -1,19 +1,40 @@
-// Imports
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
 #include "symbol_table.h"
+
+/**
+ * Symbols Item is each instance of a possible symbol item. It includes its hash
+ * key, the identifier string, its numtype and the data_value union, which can 
+ * be accessed depending on the numtype.
+ * @param   key         Hash key of this node.
+ * @param   identifier  String identifier of this node.
+ * @param   numtype     Numerical type of this node.
+ * @param   value       Union value of this node.
+ */
+typedef struct symbol_item {
+    int key;
+    char * identifier;
+    data_value * value;
+} symbol_item;
+
+/**
+ * Symbol Table stores the array of symbol_items and the size of said array.
+ * @param   size    Size of the table.
+ * @param   level   Recursion level this table is in.
+ * @param   items   Items of the table.    
+ */
+typedef struct symbol_table {
+    int size;
+    int level;
+    symbol_item * items;
+} symbol_table;
 
 /**
  * Symbol Table Initialize returns the allocated symbol table.
  * @param   level   Recursion level this table is in.
  * @return  Initialized symbol table pointer.
  */
-struct symbol_table * symbol_table_initialize(int level) {
-    struct symbol_table * table;
-    table = (struct symbol_table *)calloc(1, sizeof(struct symbol_table));
+symbol_table * symbol_table_initialize(int level) {
+    symbol_table * table;
+    table = (symbol_table *)calloc(1, sizeof(symbol_table));
     table->size = 0;
     table->level = level;
     table->items = symbol_items_initialize();
@@ -24,10 +45,10 @@ struct symbol_table * symbol_table_initialize(int level) {
  * Symbol Items Initialize returns the allocated symbol item array.
  * @return  Initialized symbol item array pointer.
  */
-struct symbol_item * symbol_items_initialize() {
-    struct symbol_item * items;
-    items = (struct symbol_item *)calloc(
-        TABLE_SIZE, sizeof(struct symbol_item));
+symbol_item * symbol_items_initialize() {
+    symbol_item * items;
+    items = (symbol_item *)calloc(
+        TABLE_SIZE, sizeof(symbol_item));
     return items;
 }
 
@@ -62,40 +83,10 @@ int hash_index(int key) {
 }
 
 /**
- * Simple print function to format and print the contents of the symbol table.
- * @param   table   Symbol table.
- */
-void symbol_table_print(struct symbol_table * table) {
-    int i;
-    printf("%4s|%12s|%12s|%12s|\n", "-", "-", "-", "-");
-    for (i=0; i<TABLE_SIZE; i++) {
-        printf(
-            "[%2d]|%12d|%12s|",
-            i,
-            table->items[i].key,
-            table->items[i].identifier
-        );
-        if (table->items[i].data.numtype == TYPE_INTEGER)
-            printf(
-                "%5s|%12d|\n", "int",
-                table->items[i].data.value.int_value
-            );
-        else if (table->items[i].data.numtype == TYPE_FLOAT)
-            printf(
-                "%5s|%12f|\n", "float",
-                table->items[i].data.value.float_value
-            );
-        else
-            printf("%5s|%12d|\n", "none", 0);
-    }
-    printf("%4s|%12s|%12s|%12s|\n", "-", "-", "-", "-");
-}
-
-/**
  * Symbol Table Terminate frees the memory used to allocate this table.
  * @param   table   Symbol table.
  */
-void symbol_table_terminate(struct symbol_table * table) {
+void symbol_table_terminate(symbol_table * table) {
     int i;
     for (i=0; i<TABLE_SIZE; i++) {
         if (table->items[i].identifier != NULL)
@@ -110,7 +101,7 @@ void symbol_table_terminate(struct symbol_table * table) {
  * @param   table   Symbol table.
  * @return  True if the symbol table is full.
  */
-bool symbol_table_is_full(struct symbol_table * table) {
+bool symbol_table_is_full(symbol_table * table) {
     return table->size == TABLE_SIZE;
 }
 
@@ -120,7 +111,7 @@ bool symbol_table_is_full(struct symbol_table * table) {
  * @param   identifier  String of the identifier.
  * @return  Position of the item, -1 is not found.
  */
-int symbol_table_search(struct symbol_table * table, char * identifier) {
+int symbol_table_search(symbol_table * table, char * identifier) {
     int key = hash_key(identifier);
     int index = hash_index(key);
     int curr = index;
@@ -129,20 +120,20 @@ int symbol_table_search(struct symbol_table * table, char * identifier) {
         if (table->items[curr].key == key) return curr;
         curr ++;
         if (curr >= TABLE_SIZE) curr = 0;
-        if (curr == index) return -1;
+        if (curr == index) return SYMBOL_NOT_FOUND;
     }
-    return -1;
+    return SYMBOL_NOT_FOUND;
 }
 
 /**
  * Symbol Table Insert creates an item node and places it depending on its key.
  * @param   table       Symbol table.
  * @param   identifier  String of the identifier.
- * @param   numtype     Type of the identifier.
+ * @param   value       Value of the identifier.
  * @return  True if the insertion was successful.
  */
 bool symbol_table_insert(
-    struct symbol_table * table, char * identifier, char numtype
+    symbol_table * table, char * identifier, data_value * value
 ) {
     if (symbol_table_is_full(table)) return false;
     
@@ -156,34 +147,28 @@ bool symbol_table_insert(
         if (curr == index) return false;
     }
 
-    struct symbol_item item;
+    symbol_item item;
     item.key = key;
     item.identifier = identifier;
-    item.data.numtype = numtype;
-    if (item.data.numtype == TYPE_INTEGER)
-        item.data.value.int_value = 0;
-    else if (item.data.numtype == TYPE_FLOAT)
-        item.data.value.float_value = 0;
-    else
-        item.data.value.int_value = 0;
+    item.value = value;
     return true;
 }
 
 /**
- * Symbol Table Assign changes the data of the table item whose identifier
+ * Symbol Table Assign changes the value of the table item whose identifier
  * matches, and uses either int_value or float_value depending on its type.
  * @param   table       Symbol table.
  * @param   index       Index of the symbol item.
- * @param   data        Data of the identifier.
+ * @param   value       Value of the identifier.
  * @return  True if the assignment was successful.
  */
 bool symbol_table_assign(
-    struct symbol_table * table, int index, DATA data
+    symbol_table * table, int index, data_value * value
 ) {
-    if (index == -1)
+    if (index == SYMBOL_NOT_FOUND)
         return false;
     else {
-        table->items[index].data = data;
+        table->items[index].value = value;
         return true;
     }
 }
@@ -194,8 +179,8 @@ bool symbol_table_assign(
  * @param   index   Index of the symbol item.
  * @return  Key of the symbol item.
  */
-int symbol_table_get_key(struct symbol_table * table, int index) {
-    if (index == -1)
+int symbol_table_get_key(symbol_table * table, int index) {
+    if (index == SYMBOL_NOT_FOUND)
         return 0;
     else
         return table->items[index].key;
@@ -207,39 +192,25 @@ int symbol_table_get_key(struct symbol_table * table, int index) {
  * @param   index   Index of the symbol item.
  * @return  Identifier of the symbol item.
  */
-char * symbol_table_get_identifier(struct symbol_table * table, int index) {
-    if (index == -1)
+char * symbol_table_get_identifier(symbol_table * table, int index) {
+    if (index == SYMBOL_NOT_FOUND)
         return NULL;
     else
         return table->items[index].identifier;
 }
 
 /**
- * Retrieves the numtype of the symbol table item at parameter index.
+ * Retrieves the value of the symbol table item at parameter index.
  * @param   table   Symbol table.
  * @param   index   Index of the symbol item.
- * @return  Numtype of the symbol item.
+ * @return  Value of the symbol item.
  */
-char symbol_table_get_numtype(struct symbol_table * table, int index) {
-    if (index == -1)
-        return '\0';
-    else
-        return table->items[index].data.numtype;
-}
-
-/**
- * Retrieves the data of the symbol table item at parameter index.
- * @param   table   Symbol table.
- * @param   index   Index of the symbol item.
- * @return  Data of the symbol item.
- */
-DATA symbol_table_get_data(struct symbol_table * table, int index) {
-    if (index == -1) {
-        union DATA placeholder;
-        placeholder.numtype = TYPE_INTEGER;
-        placeholder.value.int_value = 0;
-        return placeholder;
+data_value * symbol_table_get_data(
+    symbol_table * table, int index
+) {
+    if (index == SYMBOL_NOT_FOUND) {
+        return data_create_integer(0);
     }
     else
-        return table->items[index].data;
+        return table->items[index].value;
 }

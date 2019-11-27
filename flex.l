@@ -2,8 +2,8 @@
 // Imports
 #include <stdlib.h>
 #include <string.h>
+#include "data.h"
 #include "bison.tab.h"
-#include "symbol_table.h"
 
 // Declarations
 int flex_left_value_code(int);
@@ -51,7 +51,7 @@ DOT     [.]
 %%
 
 /**
- * Left Value Code returns the terminal code to Flex and updates Bison's
+ * Flex Left Value Code returns the terminal code to Flex and updates Bison's
  * code attribute with the terminal code.
  * @param   code    Terminal code.
  * @return  Terminal code.
@@ -62,8 +62,8 @@ int flex_left_value_code(int code) {
 }
 
 /**
- * Left Value Identifier returns the terminal code to flex and updates Bison's
- * identifier attribute with a copy of the current yytext read.
+ * Flex Left Value Identifier returns the terminal code to flex and updates 
+ * Bison's identifier attribute with a copy of the current yytext read.
  * @param   code    Terminal code.
  * @return  Terminal code.
  */
@@ -73,29 +73,23 @@ int flex_left_value_identifier(int code) {
 }
 
 /**
- * Left Value Integer returns the terminal code to flex and updates Bison's
+ * Flex Left Value Integer returns the terminal code to flex and updates Bison's
  * int_value attribute with the integer equivalent of the yytext read.
  * @param   code    Terminal code.
  * @return  Terminal code.
  */
 int flex_left_value_integer(int code) {
-    union DATA data;
-    data.numtype = TYPE_INTEGER;
-    data.value.int_value = atoi(yytext);
-    yylval.data = data;
+    yylval.data = data_create_integer(atoi(yytext));
     return code;
 }
 
 /**
- * Left Value Float returns the terminal code to flex and updates Bison's
+ * Flex Left Value Float returns the terminal code to flex and updates Bison's
  * float_value attribute with the float equivalent of the yytext read.
  * @param   code    Terminal code.
  * @return  Terminal code.
  */
 int flex_left_value_float(int code) {
-    union DATA data;
-    data.numtype = TYPE_FLOAT;
-    data.value.float_value = atof(yytext);
-    yylval.data = data;
+    yylval.data = data_create_float(atof(yytext));
     return code;
 }

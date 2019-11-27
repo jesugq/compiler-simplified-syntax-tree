@@ -2,11 +2,17 @@
 // Imports
 #include <stdio.h>
 #include <stdbool.h>
+#include "data.h"
 #include "symbol_table.h"
+
+// Declarations
+#define OPERATION_SUM '+'
+#define OPERATION_SUBSTRACT '-'
+#define OPERATION_MULTIPLY '*'
+#define OPERATION_DIVIDE '/'
 
 // Flex externals
 extern FILE * yyin;
-extern int yyerror;
 extern int yylineno;
 extern char * yytext;
 extern int yylex();
@@ -15,10 +21,20 @@ extern int yyerror(char const *);
 // Declarations
 void bison_parse_success();
 bool bison_table_identifier_exists(char *);
-bool bison_table_identifier_insert(char *);
+bool bison_table_identifier_insert(char *, data_value);
+data_value * bison_table_identifier_data(char *);
+bool bison_data_numtype_match(data_value, data_value);
+data_value * bison_data_value_operation(
+    data_value, data_value, char);
+data_value * bison_data_value_negative(data_value);
+data_value * bison_data_integer_operation(
+    data_value, data_value, char);
+data_value * bison_data_float_operation(
+    data_value, data_value, char);
 void bison_error_identifier_repeated(char *);
 void bison_error_identifier_failed(char *);
 void bison_error_identifier_missing(char *);
+void bison_error_data_mismatch(data_value, data_value);
 %}
 
 // Bison Union
@@ -26,7 +42,7 @@ void bison_error_identifier_missing(char *);
     int code;
     char * identifier;
     char numtype;
-    DATA data;
+    data_value * value;
 }
 
 // Bison Terminal Types
@@ -37,16 +53,19 @@ void bison_error_identifier_missing(char *);
 %token<code> S_PARENTL S_PARENTR S_NEGATIVE
 %token<code> S_LESS S_GREATER S_EQUALS S_LTE S_GTE
 %token<identifier> V_ID
-%token<DATA> V_NUMINT
-%token<DATA> V_NUMFLOAT
+%token<value> V_NUMINT
+%token<value> V_NUMFLOAT
 
 // Bison Non Terminal Types
-%type<DATA> tipo expr term factor
+%type<value> tipo expr term factor
 
 // Grammar
 %%
 prog
-    : opt_decls R_BEGIN opt_stmts R_END
+    : opt_decls R_BEGIN opt_stmts R_END {
+        // Print success message.
+        bison_parse_success();
+    }
 ;
 
 opt_decls
@@ -60,12 +79,29 @@ decls
 ;
 
 dec
-    : R_VAR V_ID S_COLON tipo
+    : R_VAR V_ID S_COLON tipo {
+        // Verify that the identifier is unique and can be inserted.
+        if (!bison_table_identifier_exists($2)) {
+            if (!bison_table_identifier_insert($2, $4)){
+                bison_error_identifier_failed($2);
+                YYERROR;
+            }
+        } else {
+            bison_error_identifier_repeated($2);
+            YYERROR;
+        }
+    }
 ;
 
 tipo
-    : R_INT
-    | R_FLOAT
+    : R_INT {
+        // Return a data_value type of integer.
+        $$ = data_create_integer(0);
+    }
+    | R_FLOAT {
+        // Return a data_value type of float.
+        $$ = data_create_float(0);
+    }
 ;
 
 opt_stmts
@@ -94,21 +130,67 @@ expression
 ;
 
 expr
-    : expr S_PLUS term
-    | expr S_MINUS term
-    | signo term
+    : expr S_PLUS term {
+        // Type check the expr and the term. Then do the operation.
+        if (bison_data_numtype_match($1, $3))
+            $$ = bison_data_value_operation($1, $3, OPERATION_SUM);
+        else {
+            bison_error_data_mismatch($1, $3);
+            YYERROR;
+        }
+    }
+    | expr S_MINUS term {
+        // Type check the expr and the term. Then do the operation.
+        if (bison_data_numtype_match($1, $3))
+            $$ = bison_data_value_operation($1, $3, OPERATION_SUBSTRACT);
+        else {
+            bison_error_data_mismatch($1, $3);
+            YYERROR;
+        }
+    }
+    | signo term {
+        // Return the negative of the term.
+        $$ = bison_data_value_negative($2);
+    }
     | term
 ;
 
 term
-    : term
-    | term
+    : term S_ASTERISK factor {
+        // Type check the term and the factor. Then do the operation.
+        if (bison_data_numtype_match($1, $3))
+            $$ = bison_data_value_operation($1, $3, OPERATION_MULTIPLY);
+        else {
+            bison_error_data_mismatch($1, $3);
+            YYERROR;
+        }
+    }
+    | term S_SLASH factor {
+        // Type check the term and the factor. Then do the operation.
+        if (bison_data_numtype_match($1, $3))
+            $$ = bison_data_value_operation($1, $3, OPERATION_DIVIDE);
+        else {
+            bison_error_data_mismatch($1, $3);
+            YYERROR;
+        }
+    }
     | factor
 ;
 
 factor
-    : S_PARENTL expr S_PARENTR
-    | V_ID
+    : S_PARENTL expr S_PARENTR {
+        // Simply return the expr.
+        $$ = $2;
+    }
+    | V_ID {
+        // Obtain the data from the identifier.
+        if (bison_table_identifier_exists($1))
+            $$ = bison_table_identifier_data($1);
+        else {
+            bison_error_identifier_missing($1);
+            YYERROR;
+        }
+    }
     | V_NUMINT
     | V_NUMFLOAT
 ;
@@ -135,7 +217,6 @@ signo
 int yyerror(char const * error) {
     printf("%s found after reading '%s' at line %d.\n",
         error, yytext, yylineno);
-    return yyerror;
 }
 
 /**
@@ -159,11 +240,132 @@ bool bison_table_identifier_exists(char * identifier) {
  * Bison Table Identifier Insert returns true if insertion of a new node using
  * the identifier and the numtype was successful.
  * @param   identifier  String of the identifier.
- * @param   numtype     Type of the identifier.
+ * @param   value       Value of the identifier.
  * @return  True if the insertion was successful.
  */
-bool bison_table_identifier_insert(char * identifier, char numtype) {
-    return symbol_table_insert(table, identifier, numtype);
+bool bison_table_identifier_insert(char * identifier, data_value * value) {
+    return symbol_table_insert(table, identifier, value);
+}
+
+/**
+ * Bison Table Identifier Data returns the data of the identifier.
+ * @param   identifier  String of the identifier.
+ * @return  Data of the identifier.
+ */
+data_value * bison_table_identifier_data(char * identifier) {
+    int index = symbol_table_search(identifier);
+    if (index == SYMBOL_NOT_FOUND) return data_create_integer(0);
+    else return symbol_table_get_data(index);
+}
+
+/**
+ * Bison Data Numtype Match checks the types of two data unions.
+ * @param   one     Data of the first element.
+ * @param   two     Data of the second element.
+ * @return  If both match the same numtype.
+ */
+bool bison_data_numtype_match(data_value * one, data_value * two) {
+    return one->numtype == two->numtype;
+}
+
+/**
+ * Bison Data Value Operation checks which type of operation to do, an integer
+ * or a floating point operation depending on the numtype of them. It is
+ * assumed that both are the same, but error handling is present.
+ * @param   one         Data of the first element.
+ * @param   two         Data of the second element.
+ * @param   operation   Operation to do with the two datas.
+ * @return  Arithmetic expression between the two->
+ */
+data_value * bison_data_value_operation(
+    data_value * one, data_value * two, char operation
+) {
+    if (one->numtype != two->numtype) return data_create_integer(0);
+    if (one->numtype == TYPE_INTEGER)
+        return bison_data_integer_operation(one, two, operation);
+    else if (one->numtype == TYPE_FLOAT)
+        return bison_data_float_operation(one, two, operation);
+    else return data_create_integer(0);
+}
+
+/**
+ * Bison Data Value Negative simply returns a new data type with a negative
+ * version of the one included as a paremter.
+ * @param   one     Data of the only element.
+ * @return  Negative data equivalent of the parameter.
+ */
+data_value * bison_data_value_negative(data_value * one) {
+    switch(one->numtype) {
+        case TYPE_INTEGER: return data_create_integer(one->value.int_value * -1);
+        case TYPE_FLOAT: return data_create_float(one->value.float_value * -1);
+        default: return data_create_float(0);
+    }
+}
+
+/**
+ * Bison Data Integer Operation handles an arithmethic operation between two
+ * datas of type integer, and returns the new data type.
+ * @param   one         Data of the first element.
+ * @param   two         Data of the second element.
+ * @param   operation   Operation to do with the two datas.
+ * @return  Arithmetic expression between the two->
+ */
+data_value * bison_data_integer_operation(
+    data_value * one, data_value * two, char operation
+) {
+    switch(operation) {
+        case OPERATION_SUM:
+            return data_create_integer(
+                one->value.int_value + two->value.int_value
+            );
+        case OPERATION_SUBSTRACT:
+            return data_create_integer(
+                one->value.int_value - two->value.int_value
+            );
+        case OPERATION_MULTIPLY:
+            return data_create_integer(
+                one->value.int_value * two->value.int_value
+            );
+        case OPERATION_DIVIDE:
+            return data_create_integer(
+                one->value.int_value / two->value.int_value
+            );
+        default:
+            return data_create_integer(0);
+    }
+}
+
+/**
+ * Bison Data Float Operation handles an arithmethic operation between two
+ * datas of type integer, and returns the new data type.
+ * @param   one         Data of the first element.
+ * @param   two         Data of the second element.
+ * @param   operation   Operation to do with the two datas.
+ * @return  Arithmetic expression between the two->
+ */
+data_value * bison_data_float_operation(
+    data_value * one, data_value * two, char operation
+) {
+    switch(operation) {
+        case OPERATION_SUM:
+            return data_create_float(
+                one->value.float_value + two->value.float_value
+            );
+        case OPERATION_SUBSTRACT:
+            return data_create_float(
+                one->value.float_value - two->value.float_value
+            );
+        case OPERATION_MULTIPLY:
+            return data_create_float(
+                one->value.float_value * two->value.float_value
+            );
+        case OPERATION_DIVIDE:
+            return data_create_float(
+                one->value.float_value / two->value.float_value
+            );
+        default:
+            return data_create_float(0);
+    }
 }
 
 /**
@@ -172,7 +374,7 @@ bool bison_table_identifier_insert(char * identifier, char numtype) {
  * @param   identifier  String of the identifier.
  */
 void bison_error_identifier_repeated(char * identifier) {
-    char error[] = "variable declared twice: "
+    char error[] = "variable declared twice: ";
     strcat(error, identifier);
     yyerror(error);
 }
@@ -183,7 +385,7 @@ void bison_error_identifier_repeated(char * identifier) {
  * @param   identifier  String of the identifier.
  */
 void bison_error_identifier_failed(char * identifier) {
-    char error[] = "variable failed to be inserted: "
+    char error[] = "variable failed to be inserted: ";
     strcat(error, identifier);
     yyerror(error);
 }
@@ -194,8 +396,28 @@ void bison_error_identifier_failed(char * identifier) {
  * @param   identifier  String of the identifier.
  */
 void bison_error_identifier_failed(char * identifier) {
-    char error[] = "variable not found: "
+    char error[] = "variable not found: ";
     strcat(error, identifier);
+    yyerror(error);
+}
+
+/**
+ * Bison Error Identifier Missing calls the yyerror function with a message of
+ * "operation between different types: one and two".
+ * @param   identifier  String of the identifier.
+ */
+void bison_error_data_mismatch(data_value * one, data_value * two) {
+    char error[] = "variable not found: ";
+    char erra[] = " and ";
+    char erri[] = "int";
+    char errf[] = "float";
+    if (one->numtype == TYPE_INTEGER) strcat(error, erri);
+    else if (one->numtype == TYPE_FLOAT) strcat(error, errf);
+    else strcat(error, erri);
+    strcat(error, erra);
+    if (two->numtype == TYPE_INTEGER) strcat(error, erri);
+    else if (two->numtype == TYPE_FLOAT) strcat(error, errf);
+    else strcat(error, erri);
     yyerror(error);
 }
 
@@ -211,14 +433,14 @@ int main(int argc, char * argv[]) {
     if (argc < 2) {
         printf("No file argument provided.\n");
         return 1;
-    } else if (yyin = fopen(argv[1]) == NULL) {
+    } else if (yyin = fopen(argv[1], "r") == NULL) {
         printf("Failed to open file.\n");
         return 1;
     } else
         printf("File opened successfully.\n");
 
     // Flex and Bison parsing.
-    struct symbol_table * table;
+    symbol_table * table;
     table = symbol_table_initialize(0);
     yyparse();
     symbol_table_print(table);
