@@ -57,15 +57,12 @@ void bison_error_data_mismatch(data_value, data_value);
 %token<value> V_NUMFLOAT
 
 // Bison Non Terminal Types
-%type<value> tipo expr term factor
+// %type<value> tipo expr term factor
 
 // Grammar
 %%
 prog
-    : opt_decls R_BEGIN opt_stmts R_END {
-        // Print success message.
-        bison_parse_success();
-    }
+    : opt_decls R_BEGIN opt_stmts R_END
 ;
 
 opt_decls
@@ -79,29 +76,12 @@ decls
 ;
 
 dec
-    : R_VAR V_ID S_COLON tipo {
-        // Verify that the identifier is unique and can be inserted.
-        if (!bison_table_identifier_exists($2)) {
-            if (!bison_table_identifier_insert($2, $4)){
-                bison_error_identifier_failed($2);
-                YYERROR;
-            }
-        } else {
-            bison_error_identifier_repeated($2);
-            YYERROR;
-        }
-    }
+    : R_VAR V_ID S_COLON tipo
 ;
 
 tipo
-    : R_INT {
-        // Return a data_value type of integer.
-        $$ = data_create_integer(0);
-    }
-    | R_FLOAT {
-        // Return a data_value type of float.
-        $$ = data_create_float(0);
-    }
+    : R_INT
+    | R_FLOAT
 ;
 
 opt_stmts
@@ -130,67 +110,21 @@ expression
 ;
 
 expr
-    : expr S_PLUS term {
-        // Type check the expr and the term. Then do the operation.
-        if (bison_data_numtype_match($1, $3))
-            $$ = bison_data_value_operation($1, $3, OPERATION_SUM);
-        else {
-            bison_error_data_mismatch($1, $3);
-            YYERROR;
-        }
-    }
-    | expr S_MINUS term {
-        // Type check the expr and the term. Then do the operation.
-        if (bison_data_numtype_match($1, $3))
-            $$ = bison_data_value_operation($1, $3, OPERATION_SUBSTRACT);
-        else {
-            bison_error_data_mismatch($1, $3);
-            YYERROR;
-        }
-    }
-    | signo term {
-        // Return the negative of the term.
-        $$ = bison_data_value_negative($2);
-    }
+    : expr S_PLUS term
+    | expr S_MINUS term
+    | signo term
     | term
 ;
 
 term
-    : term S_ASTERISK factor {
-        // Type check the term and the factor. Then do the operation.
-        if (bison_data_numtype_match($1, $3))
-            $$ = bison_data_value_operation($1, $3, OPERATION_MULTIPLY);
-        else {
-            bison_error_data_mismatch($1, $3);
-            YYERROR;
-        }
-    }
-    | term S_SLASH factor {
-        // Type check the term and the factor. Then do the operation.
-        if (bison_data_numtype_match($1, $3))
-            $$ = bison_data_value_operation($1, $3, OPERATION_DIVIDE);
-        else {
-            bison_error_data_mismatch($1, $3);
-            YYERROR;
-        }
-    }
+    : term S_ASTERISK factor
+    | term S_SLASH factor
     | factor
 ;
 
 factor
-    : S_PARENTL expr S_PARENTR {
-        // Simply return the expr.
-        $$ = $2;
-    }
-    | V_ID {
-        // Obtain the data from the identifier.
-        if (bison_table_identifier_exists($1))
-            $$ = bison_table_identifier_data($1);
-        else {
-            bison_error_identifier_missing($1);
-            YYERROR;
-        }
-    }
+    : S_PARENTL expr S_PARENTR
+    | V_ID
     | V_NUMINT
     | V_NUMFLOAT
 ;
