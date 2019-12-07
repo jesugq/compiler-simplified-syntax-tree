@@ -15,8 +15,17 @@
 #define SYMBOL_NOT_FOUND    -1
 
 // Declarations
-typedef struct symbol_item symbol_item;
-typedef struct symbol_table symbol_table;
+typedef struct symbol_item {
+    int key;
+    char * identifier;
+    struct data_value * value;
+} symbol_item;
+typedef struct symbol_table {
+    int size;
+    int level;
+    struct symbol_item * items;
+} symbol_table;
+
 symbol_table * symbol_initialize(int);
 symbol_item * symbol_itemize();
 void symbol_print(symbol_table *);

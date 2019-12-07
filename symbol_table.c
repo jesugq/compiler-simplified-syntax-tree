@@ -9,11 +9,11 @@
  * @param   numtype     Numerical type of this node.
  * @param   value       Union value of this node.
  */
-typedef struct symbol_item {
-    int key;
-    char * identifier;
-    struct data_value * value;
-} symbol_item;
+// typedef struct symbol_item {
+//     int key;
+//     char * identifier;
+//     struct data_value * value;
+// } symbol_item;
 
 /**
  * Symbol Table stores the array of symbol_items and the size of said array.
@@ -21,11 +21,11 @@ typedef struct symbol_item {
  * @param   level   Recursion level this table is in.
  * @param   items   Items of the table.    
  */
-typedef struct symbol_table {
-    int size;
-    int level;
-    struct symbol_item * items;
-} symbol_table;
+// typedef struct symbol_table {
+//     int size;
+//     int level;
+//     struct symbol_item * items;
+// } symbol_table;
 
 /**
  * Symbol Table Initialize returns the allocated symbol table.

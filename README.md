@@ -209,17 +209,17 @@ typedef struct symbol_table {
 ## Syntax Tree Types
 The Syntax Tree uses three node pointers defining what to use, its type, such as an instruction or a value, and an union value regarding the contents of this node, with the type defining how to use them.
 ```c
-typedef union node_value {
+typedef union tree_info {
     int instruction;            // Instruction to execute of this node.
     char * identifier;          // Identifier to read of this node.
     data_value data;            // Data of the item.
-} node_value;
+} tree_info;
 
-typedef struct node_data {
+typedef struct tree_node {
     char nodetype;              // Type of this node, used to handle the data.
     node_value content;         // Content of this node, handled by knowing type.
     node_data * node_a;       // First child node.
     node_data * node_b;       // Second child ndoe.
     node_data * node_c;       // Third child node.
-} node_data;
+} tree_node;
 ```
