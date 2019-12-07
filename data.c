@@ -73,7 +73,7 @@ data_value * data_operation(
     if (one->numtype == DATA_INTEGER) {
         int input_one = one->number.int_value;
         int input_two = two->number.int_value;
-        int output;
+        int output = 0;
 
         switch (operation) {
             case DATA_SUM:          output = input_one + input_two; break;
@@ -81,12 +81,12 @@ data_value * data_operation(
             case DATA_MULTIPLY:     output = input_one * input_two; break;
             case DATA_DIVIDE:       output = input_one / input_two; break;
             default:                output = 0; break;
-            return data_create_integer(output);
         }
+        return data_create_integer(output);
     } else if (one->numtype == DATA_FLOAT) {
         float input_one = one->number.float_value;
-        float input_two = one->number.float_value;
-        float output;
+        float input_two = two->number.float_value;
+        float output = 0;
 
         switch (operation) {
             case DATA_SUM:          output = input_one + input_two; break;
@@ -94,8 +94,8 @@ data_value * data_operation(
             case DATA_MULTIPLY:     output = input_one * input_two; break;
             case DATA_DIVIDE:       output = input_one / input_two; break;
             default:                output = 0; break;
-            return data_create_float(output);
         }
+        return data_create_float(output);
     } else return data_create_integer(0);
 }
 
