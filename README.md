@@ -23,6 +23,7 @@ gcc lex.yy.c bison.tab.c symbol_table.c data.c -lfl -lm -o run.out
 
 # Or the short version
 flex flex.l && bison -d bison.y && gcc lex.yy.c bison.tab.c symbol_table.c data.c -lfl -lm -o run.out
+./runout file.txt
 ```
 
 ## Terminal Nomenclature
@@ -177,8 +178,8 @@ The Symbol Table used uses a simple hash table, implementing Java's hashCode fun
 The union type used for the numeric value of the hash item are the following.
 ```c
 typedef union data_number {
-    int int_value;      // Integer depiction of a number.
-    float float_value;  // Float depiction of a number.
+    int int_value;              // Integer depiction of a number.
+    float float_value;          // Float depiction of a number.
 } data_number;
 
 typedef struct data_value {
@@ -208,19 +209,17 @@ typedef struct symbol_table {
 ## Syntax Tree Types
 The Syntax Tree uses three node pointers defining what to use, its type, such as an instruction or a value, and an union value regarding the contents of this node, with the type defining how to use them.
 ```c
-typedef struct syntax_node {
-    char nodetype;              // Type of this node, used to handle the data.
-    union data {                // Data of this node.
-        int instruction;        // Instruction to execute of this node.
-        char * identifier;      // Identifier to read of this node.
-        data_value data;        // Data of the item.
-    }
-} node;
-```
+typedef union node_value {
+    int instruction;            // Instruction to execute of this node.
+    char * identifier;          // Identifier to read of this node.
+    data_value data;            // Data of the item.
+} node_value;
 
-## Functions Information
-The one recommended by the professor is the following.
-Número
-Tipo
-Número de Parámetros
-Lista de Parámetros
+typedef struct node_data {
+    char nodetype;              // Type of this node, used to handle the data.
+    node_value content;         // Content of this node, handled by knowing type.
+    node_data * node_a;       // First child node.
+    node_data * node_b;       // Second child ndoe.
+    node_data * node_c;       // Third child node.
+} node_data;
+```
