@@ -45,15 +45,14 @@ typedef struct syntax_node {
     bool evaluation;
     char instruction;
     char * identifier;
-    data_value * value;
-    syntax_node * nodea;
-    syntax_node * nodeb;
-    syntax_node * nodec;
+    struct data_value * value;
+    struct syntax_node * nodea;
+    struct syntax_node * nodeb;
+    struct syntax_node * nodec;
 } syntax_node;
 
-syntax_node * syntax_create_node(
-    char, bool, char*, data_value*, syntax_node*, syntax_node*, syntax_node*
-);
+syntax_node * syntax_create_node(char, char, bool, char, char*, data_value*,
+    syntax_node*, syntax_node*, syntax_node*);
 
 // syntax_node * syntax_create_stmt();
 // syntax_node * syntax_create_assign();

@@ -21,9 +21,9 @@
 //     char instruction;
 //     char * identifier;
 //     data_value * value;
-//     syntax_node * nodea;
-//     syntax_node * nodeb;
-//     syntax_node * nodec;
+//     struct syntax_node * nodea;
+//     struct syntax_node * nodeb;
+//     struct syntax_node * nodec;
 // } syntax_node;
 
 /**
@@ -41,7 +41,9 @@
  */
 syntax_node * syntax_create_node(
     char nodetype,
+    char operation,
     bool evaluation,
+    char instruction,
     char * identifier,
     data_value * value,
     syntax_node * nodea,
@@ -53,6 +55,7 @@ syntax_node * syntax_create_node(
 
     node->nodetype      = nodetype;
     node->evaluation    = evaluation;
+    node->instruction   = instruction;
     node->identifier    = identifier;
     node->value         = value;
     node->nodea         = nodea;

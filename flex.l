@@ -55,45 +55,45 @@ DOT     [.]
 %%
 
 /**
- * Flex Left Value Instruction returns the terminal code to Flex and updates 
- * Bison's code attribute with the terminal code.
- * @param   code    Terminal code.
- * @return  Terminal code.
+ * Flex Left Value Instruction returns the terminal instruction to Flex and
+ updates Bison's instruction attribute with the terminal instruction.
+ * @param   instruction    Terminal instruction.
+ * @return  Terminal instruction.
  */
-int flex_left_value_instruction(int code) {
-    yylval.instruction = code;
-    return code;
+int flex_left_value_instruction(int instruction) {
+    yylval.instruction = instruction;
+    return instruction;
 }
 
 /**
- * Flex Left Value Identifier returns the terminal code to flex and updates 
+ * Flex Left Value Identifier returns the terminal instruction to flex updates 
  * Bison's identifier attribute with a copy of the current yytext read.
- * @param   code    Terminal code.
- * @return  Terminal code.
+ * @param   instruction    Terminal instruction.
+ * @return  Terminal instruction.
  */
-int flex_left_value_identifier(int code) {
+int flex_left_value_identifier(int instruction) {
     yylval.identifier = strdup(yytext);
-    return code;
+    return instruction;
 }
 
 /**
- * Flex Left Value Integer returns the terminal code to flex and updates Bison's
- * int_value attribute with the integer equivalent of the yytext read.
- * @param   code    Terminal code.
- * @return  Terminal code.
+ * Flex Left Value Integer returns the terminal instruction to flex and updates
+ * Bison's int_value attribute with the integer equivalent of the yytext read.
+ * @param   instruction    Terminal instruction.
+ * @return  Terminal instruction.
  */
-int flex_left_value_integer(int code) {
+int flex_left_value_integer(int instruction) {
     yylval.value = data_create_integer(atoi(yytext));
-    return code;
+    return instruction;
 }
 
 /**
- * Flex Left Value Float returns the terminal code to flex and updates Bison's
+ * Flex Left Value Float returns the terminal instruction to flex Bison's
  * float_value attribute with the float equivalent of the yytext read.
- * @param   code    Terminal code.
- * @return  Terminal code.
+ * @param   instruction    Terminal instruction.
+ * @return  Terminal instruction.
  */
-int flex_left_value_float(int code) {
+int flex_left_value_float(int instruction) {
     yylval.value = data_create_float(atof(yytext));
-    return code;
+    return instruction;
 }

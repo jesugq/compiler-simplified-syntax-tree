@@ -18,11 +18,11 @@ Identifiers and numbers have to be recognized via flex using a standard definiti
 ```bash
 flex flex.l
 bison -d bison.y
-gcc lex.yy.c bison.tab.c symbol_table.c data.c -lfl -lm -o run.out
+gcc lex.yy.c bison.tab.c symbol_table.c syntax_tree.c data.c -lfl -lm -o run.out
 ./runout file.txt
 
 # Or the short version
-flex flex.l && bison -d bison.y && gcc lex.yy.c bison.tab.c symbol_table.c data.c -lfl -lm -o run.out
+flex flex.l && bison -d bison.y && gcc lex.yy.c bison.tab.c symbol_table.c syntax_tree.c data.c -lfl -lm -o run.out
 ./runout file.txt
 ```
 
@@ -107,11 +107,7 @@ stmt
 
 expression
     : expr
-    | expr S_LESS expr
-    | expr S_GREATER expr
-    | expr S_EQUALS expr
-    | expr S_LTE expr
-    | expr S_GTE expr
+    | expr relop expr
 ;
 
 expr
@@ -134,13 +130,12 @@ factor
     | V_NUMFLOAT
 ;
 
-// Relop was forced to stay inside of expression to save a node creation.
-// relop
-//     : S_LESS
-//     | S_GREATER
-//     | S_EQUALS
-//     | S_LTE
-//    | S_GTE
+relop
+    : S_LESS
+    | S_GREATER
+    | S_EQUALS
+    | S_LTE
+    | S_GTE
 ;
 
 signo
@@ -242,7 +237,7 @@ Executes the instruction in nodea and then the instruction in nodeb if it is not
 * identifier    is NULL
 * value         is NULL
 * nodea         is INSTRUCTION of ASSIGN IF IFELSE WHILE READ PRINT or BEGINEND
-* nodeb         is INSTRUCTION of STMT
+* nodeb         is INSTRUCTION of STMT or NULL
 * nodec         is NULL
 
 Node of type ASSIGN
@@ -254,7 +249,7 @@ Assigns the value in nodeb to the symbol table value of the identifier in nodea.
 * identifier    is NULL
 * value         is NULL
 * nodea         is IDENTIFIER
-* nodeb         is IDENTIFIER or VALUE
+* nodeb         is INSTRUCTION OF EXPR
 * nodec         is NULL
 
 Node of type IF
@@ -313,7 +308,7 @@ Executes a printf of the value inside of the identifier in nodea.
 * instruction   is PRINT
 * identifier    is NULL
 * value         is NULL
-* nodea         is IDENTIFIER
+* nodea         is INSTRUCTION OF EXPR
 * nodeb         is NULL
 * nodec         is NULL
 

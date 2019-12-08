@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "symbol_table.h"
+#include "syntax_tree.h"
 
 #ifndef _DATAH_
 #define _DATAH_
@@ -11,6 +12,7 @@
 
 // Global Table
 symbol_table * table;
+syntax_node * node;
 
 // Flex externals
 extern FILE * yyin;
@@ -37,18 +39,18 @@ void bison_error_data_misassign(char *, data_value *, data_value *);
 }
 
 // Bison Terminal Types
-%token<code> R_BEGIN R_END R_VAR R_INT R_FLOAT
-%token<code> R_IF R_IFELSE R_WHILE R_READ R_PRINT
-%token<code> S_SEMICOLON S_COLON S_ASSIGN
-%token<code> S_PLUS S_MINUS S_ASTERISK S_SLASH
-%token<code> S_PARENTL S_PARENTR S_NEGATIVE
-%token<code> S_LESS S_GREATER S_EQUALS S_LTE S_GTE
+%token<instruction> R_BEGIN R_END R_VAR R_INT R_FLOAT
+%token<instruction> R_IF R_IFELSE R_WHILE R_READ R_PRINT
+%token<instruction> S_SEMICOLON S_COLON S_ASSIGN
+%token<instruction> S_PLUS S_MINUS S_ASTERISK S_SLASH
+%token<instruction> S_PARENTL S_PARENTR S_NEGATIVE
+%token<instruction> S_LESS S_GREATER S_EQUALS S_LTE S_GTE
 %token<identifier> V_ID
 %token<value> V_NUMINT
 %token<value> V_NUMFLOAT
 
 // Bison Non Terminal Types
-%type<value> stmt_lst stmt expression expr term factor relop signo
+// %type<node> stmt_lst stmt expression expr term factor relop signo
 
 // Grammar
 %%
@@ -96,16 +98,13 @@ stmt
 
 expression
     : expr
-    | expr S_LESS expr
-    | expr S_GREATER expr
-    | expr S_EQUALS expr
-    | expr S_LTE expr
-    | expr S_GTE expr
+    | expr relop expr
 ;
 
 expr
     : expr S_PLUS term
     | expr S_MINUS term
+    | signo term
     | term
 ;
 
@@ -289,6 +288,7 @@ int main(int argc, char * argv[]) {
 
     // Flex and Bison parsing.
     table = symbol_initialize(0);
+    node = NULL;
     yyparse();
     symbol_print(table);
 
