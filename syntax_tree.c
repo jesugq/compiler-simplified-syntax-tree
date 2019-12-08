@@ -32,7 +32,7 @@
  */
 syntax_node * syntax_initialize() {
     syntax_node * node;
-    node = (syntax_node *)calloc(0, sizeof(syntax_node));
+    node = (syntax_node *)malloc(sizeof(syntax_node));
 
     node->nodetype      = SYNTAX_CNULL;
     node->evaluation    = SYNTAX_BNULL;
@@ -72,7 +72,7 @@ syntax_node * syntax_create_node(
     syntax_node * nodec
 ) {
     syntax_node * node;
-    node = (syntax_node *)calloc(0, sizeof(syntax_node));
+    node = (syntax_node *)malloc(sizeof(syntax_node));
 
     node->nodetype      = nodetype;
     node->operation     = operation;

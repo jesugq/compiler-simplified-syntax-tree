@@ -1,4 +1,6 @@
 // Imports
+#include <stdio.h>
+
 #ifndef _DATAH_
 #define _DATAH_
 #include "data.h"
