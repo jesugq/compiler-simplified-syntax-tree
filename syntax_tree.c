@@ -34,14 +34,14 @@ syntax_node * syntax_initialize() {
     syntax_node * node;
     node = (syntax_node *)malloc(sizeof(syntax_node));
 
-    node->nodetype      = SYNTAX_CNULL;
-    node->evaluation    = SYNTAX_BNULL;
-    node->instruction   = SYNTAX_CNULL;
-    node->identifier    = SYNTAX_DNULL;
-    node->value         = SYNTAX_DNULL;
-    node->nodea         = SYNTAX_DNULL;
-    node->nodeb         = SYNTAX_DNULL;
-    node->nodec         = SYNTAX_DNULL;
+    node->nodetype      = SYNTAX_NULLT;
+    node->evaluation    = SYNTAX_NULLB;
+    node->instruction   = SYNTAX_NULLT;
+    node->identifier    = SYNTAX_NULLV;
+    node->value         = SYNTAX_NULLV;
+    node->nodea         = SYNTAX_NULLV;
+    node->nodeb         = SYNTAX_NULLV;
+    node->nodec         = SYNTAX_NULLV;
 
     return node;
 }
@@ -85,4 +85,242 @@ syntax_node * syntax_create_node(
     node->nodec         = nodec;
 
     return node;
+}
+
+/**
+ * Syntax Create Expression is different because of the usage of relop.
+ * The relop can be LESS GREATER EQUALS LTE LTE or ZERO.
+ * @param   operation   Type of relop.
+ * @param   nodea       First node.
+ * @param   nodeb       Second node.
+ * @param   nodec       Third node.
+ * @return  Node created.
+ */
+syntax_node * syntax_create_expression(
+    char operation,
+    syntax_node * nodea,
+    syntax_node * nodeb,
+    syntax_node * nodec
+) {
+    return syntax_create_node(
+        SYNTAX_INSTRUCTION,
+        operation,
+        SYNTAX_NULLB,
+        SYNTAX_EXPRESSION,
+        SYNTAX_NULLV,
+        SYNTAX_NULLV,
+        nodea,
+        nodeb,
+        nodec
+    );
+}
+
+/**
+ * Syntax Create Expr is different because of the usage of the terminals.
+ * The terminal can be SUM SUBSTRACT or NEGATIVE.
+ * @param   operation   Type of terminal.
+ * @param   nodea       First node.
+ * @param   nodeb       Second node.
+ * @param   nodec       Third node.
+ * @return  Node created.
+ */
+syntax_node * syntax_create_expr(
+    char operation,
+    syntax_node * nodea,
+    syntax_node * nodeb,
+    syntax_node * nodec
+) {
+    return syntax_create_node(
+        SYNTAX_INSTRUCTION,
+        operation,
+        SYNTAX_NULLB,
+        SYNTAX_EXPR,
+        SYNTAX_NULLV,
+        SYNTAX_NULLV,
+        nodea,
+        nodeb,
+        nodec
+    );
+}
+
+/**
+ * Syntax Create Expr is different because of the usage of the terminals.
+ * The terminal can be SUM SUBSTRACT or NEGATIVE.
+ * @param   operation   Type of terminal.
+ * @param   nodea       First node.
+ * @param   nodeb       Second node.
+ * @param   nodec       Third node.
+ * @return  Node created.
+ */
+syntax_node * syntax_create_term(
+    char operation,
+    syntax_node * nodea,
+    syntax_node * nodeb,
+    syntax_node * nodec
+) {
+    return syntax_create_node(
+        SYNTAX_INSTRUCTION,
+        operation,
+        SYNTAX_NULLB,
+        SYNTAX_TERM,
+        SYNTAX_NULLV,
+        SYNTAX_NULLV,
+        nodea,
+        nodeb,
+        nodec
+    );
+}
+
+/**
+ * Syntax Create Value is used for the creation of identifiers, integers or
+ * floating point numbers.
+ * @param   nodetype    Type, identifier integer or float.
+ * @param   identifier  Identifier if available.
+ * @param   value       Value included.
+ * @return  Node created.
+ */
+syntax_node * syntax_create_value(
+    char nodetype,
+    char * identifier,
+    data_value * value
+) {
+    return syntax_create_node(
+        nodetype,
+        SYNTAX_NULLT,
+        SYNTAX_NULLB,
+        SYNTAX_NULLT,
+        identifier,
+        value,
+        SYNTAX_NULLV,
+        SYNTAX_NULLV,
+        SYNTAX_NULLV
+    );
+}
+
+
+/**
+ * Basic Node Creation for the Instructions named below.
+ * @param   nodea   First node.
+ * @param   nodeb   Second node.
+ * @param   nodec   Third node.
+ * @return  Node created.
+ */
+syntax_node * syntax_create_stmt(
+    syntax_node * nodea,
+    syntax_node * nodeb,
+    syntax_node * nodec
+) {
+    return syntax_create_node(
+        SYNTAX_INSTRUCTION,
+        SYNTAX_NULLT,
+        SYNTAX_NULLB,
+        SYNTAX_STMT,
+        SYNTAX_NULLV,
+        SYNTAX_NULLV,
+        nodea,
+        nodeb,
+        nodec
+    );
+}
+syntax_node * syntax_create_assign(
+    syntax_node * nodea,
+    syntax_node * nodeb,
+    syntax_node * nodec
+) {
+    return syntax_create_node(
+        SYNTAX_INSTRUCTION,
+        SYNTAX_NULLT,
+        SYNTAX_NULLB,
+        SYNTAX_ASSIGN,
+        SYNTAX_NULLV,
+        SYNTAX_NULLV,
+        nodea,
+        nodeb,
+        nodec
+    );
+}
+syntax_node * syntax_create_if(
+    syntax_node * nodea,
+    syntax_node * nodeb,
+    syntax_node * nodec
+) {
+    return syntax_create_node(
+        SYNTAX_INSTRUCTION,
+        SYNTAX_NULLT,
+        SYNTAX_NULLB,
+        SYNTAX_IF,
+        SYNTAX_NULLV,
+        SYNTAX_NULLV,
+        nodea,
+        nodeb,
+        nodec
+    );
+}
+syntax_node * syntax_create_ifelse(
+    syntax_node * nodea,
+    syntax_node * nodeb,
+    syntax_node * nodec
+) {
+    return syntax_create_node(
+        SYNTAX_INSTRUCTION,
+        SYNTAX_NULLT,
+        SYNTAX_NULLB,
+        SYNTAX_IFELSE,
+        SYNTAX_NULLV,
+        SYNTAX_NULLV,
+        nodea,
+        nodeb,
+        nodec
+    );
+}
+syntax_node * syntax_create_while(
+    syntax_node * nodea,
+    syntax_node * nodeb,
+    syntax_node * nodec
+) {
+    return syntax_create_node(
+        SYNTAX_INSTRUCTION,
+        SYNTAX_NULLT,
+        SYNTAX_NULLB,
+        SYNTAX_WHILE,
+        SYNTAX_NULLV,
+        SYNTAX_NULLV,
+        nodea,
+        nodeb,
+        nodec
+    );
+}
+syntax_node * syntax_create_read(
+    syntax_node * nodea,
+    syntax_node * nodeb,
+    syntax_node * nodec
+) {
+    return syntax_create_node(
+        SYNTAX_INSTRUCTION,
+        SYNTAX_NULLT,
+        SYNTAX_NULLB,
+        SYNTAX_READ,
+        SYNTAX_NULLV,
+        SYNTAX_NULLV,
+        nodea,
+        nodeb,
+        nodec
+    );
+}
+syntax_node * syntax_create_print(
+    syntax_node * nodea,
+    syntax_node * nodeb,
+    syntax_node * nodec
+) {
+    return syntax_create_node(
+        SYNTAX_INSTRUCTION,
+        SYNTAX_NULLT,
+        SYNTAX_NULLB,
+        SYNTAX_PRINT,
+        SYNTAX_NULLV,
+        SYNTAX_NULLV,
+        nodea,
+        nodeb,
+        nodec
+    );
 }

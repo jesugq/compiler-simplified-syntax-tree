@@ -13,9 +13,9 @@
 #define SYNTAX_VALUE        '2'
 
 // NULL Types
-#define SYNTAX_DNULL        NULL
-#define SYNTAX_CNULL        '\0'
-#define SYNTAX_BNULL        false
+#define SYNTAX_NULLV        NULL
+#define SYNTAX_NULLT        '\0'
+#define SYNTAX_NULLB        false
 
 // Instructions
 #define SYNTAX_STMT         'S'
@@ -59,21 +59,27 @@ typedef struct syntax_node {
 } syntax_node;
 
 syntax_node * syntax_initialize();
-syntax_node * syntax_create_node(char, char, bool, char, char*, data_value*,
-    syntax_node*, syntax_node*, syntax_node*);
+syntax_node * syntax_create_node(
+    char, char, bool, char, char*, data_value*,
+    syntax_node*, syntax_node*, syntax_node*
+);
+syntax_node * syntax_create_expression(
+    char, syntax_node*, syntax_node*, syntax_node*
+);
+syntax_node * syntax_create_expr(
+    char, syntax_node*, syntax_node*, syntax_node*
+);
+syntax_node * syntax_create_term(
+    char, syntax_node*, syntax_node*, syntax_node*
+);
+syntax_node * syntax_create_value(
+    char, char*, data_value*
+);
 
-// syntax_node * syntax_create_stmt();
-// syntax_node * syntax_create_assign();
-// syntax_node * syntax_create_if();
-// syntax_node * syntax_create_ifelse();
-// syntax_node * syntax_create_while();
-// syntax_node * syntax_create_read();
-// syntax_node * syntax_create_print();
-// syntax_node * syntax_create_beginend();
-// syntax_node * syntax_create_expression();
-// syntax_node * syntax_create_relop();
-// syntax_node * syntax_create_expr();
-// syntax_node * syntax_create_term();
-// syntax_node * syntax_create_identifier();
-// syntax_node * syntax_create_integer();
-// syntax_node * syntax_create_float();
+syntax_node * syntax_create_stmt(syntax_node*, syntax_node*, syntax_node*);
+syntax_node * syntax_create_assign(syntax_node*, syntax_node*, syntax_node*);
+syntax_node * syntax_create_if(syntax_node*, syntax_node*, syntax_node*);
+syntax_node * syntax_create_ifelse(syntax_node*, syntax_node*, syntax_node*);
+syntax_node * syntax_create_while(syntax_node*, syntax_node*, syntax_node*);
+syntax_node * syntax_create_read(syntax_node*, syntax_node*, syntax_node*);
+syntax_node * syntax_create_print(syntax_node*, syntax_node*, syntax_node*);

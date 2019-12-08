@@ -51,7 +51,7 @@ void bison_error_data_misassign(char *, data_value *, data_value *);
 %token<value> V_NUMFLOAT
 
 // Bison Non Terminal Types
-%type<operation> relop
+%type<operation> relop signo
 %type<value> tipo
 %type<node> opt_stmts stmt_lst stmt expression expr term factor
 
@@ -114,17 +114,11 @@ opt_stmts
 stmt_lst
     : stmt S_SEMICOLON stmt_lst {
         // Create a node of INSTRUCTION STMT.
-        $$ = syntax_create_node(
-            SYNTAX_INSTRUCTION, SYNTAX_CNULL, SYNTAX_BNULL, SYNTAX_STMT,
-            SYNTAX_DNULL, SYNTAX_DNULL, $1, $3, SYNTAX_DNULL
-        );
+        $$ = syntax_create_stmt($1, $3, NULL);
     }
     | stmt {
         // Create a node of INSTRUCTION STMT
-        $$ = syntax_create_node(
-            SYNTAX_INSTRUCTION, SYNTAX_CNULL, SYNTAX_BNULL, SYNTAX_STMT,
-            SYNTAX_DNULL, SYNTAX_DNULL, $1, SYNTAX_DNULL, SYNTAX_DNULL
-        );
+        $$ = syntax_create_stmt($1, NULL, NULL);
     }
 ;
 
@@ -137,38 +131,27 @@ stmt
         }
 
         // Create a node using an identifier.
+        syntax_node * id_node;
         char * identifier = $1;
         data_value * value = symbol_extract(table, identifier);
-        syntax_node * id_node = syntax_create_node(
-            SYNTAX_IDENTIFIER, SYNTAX_CNULL, SYNTAX_BNULL, SYNTAX_CNULL,
-            identifier, value, SYNTAX_DNULL, SYNTAX_DNULL, SYNTAX_DNULL
-        );
+        id_node = syntax_create_value(SYNTAX_IDENTIFIER, identifier, value);
 
         // Create a node of INSTRUCTION ASSIGN
-        $$ = syntax_create_node(
-            SYNTAX_INSTRUCTION, SYNTAX_CNULL, SYNTAX_BNULL, SYNTAX_ASSIGN,
-            SYNTAX_DNULL, SYNTAX_DNULL, id_node, $3, SYNTAX_DNULL
-        );
+        $$ = syntax_create_assign(id_node, $3, NULL);
         
         // Type Check TBD.
     }
-    | R_IF S_PARENTL expression S_PARENTR stmt{
+    | R_IF S_PARENTL expression S_PARENTR stmt {
         // Create a node of INSTRUCTION IF
-        $$ = syntax_create_node(
-            SYNTAX_INSTRUCTION, SYNTAX_CNULL, SYNTAX_BNULL, SYNTAX_IF, SYNTAX_DNULL, SYNTAX_DNULL, $3, $5, SYNTAX_DNULL
-        );
+        $$ = syntax_create_if($3, $5, NULL);
     }
-    | R_IFELSE S_PARENTL expression S_PARENTR stmt stmt{
+    | R_IFELSE S_PARENTL expression S_PARENTR stmt stmt {
         // Create a node of INSTRUCTION IFELSE
-        $$ = syntax_create_node(
-            SYNTAX_INSTRUCTION, SYNTAX_CNULL, SYNTAX_BNULL, SYNTAX_IFELSE, SYNTAX_DNULL, SYNTAX_DNULL, $3, $5, $6
-        );
+        $$ = syntax_create_ifelse($3, $5, $6);
     }
-    | R_WHILE S_PARENTL expression S_PARENTR stmt{
+    | R_WHILE S_PARENTL expression S_PARENTR stmt {
         // Create a node of INSTRUCTION WHILE
-        $$ = syntax_create_node(
-            SYNTAX_INSTRUCTION, SYNTAX_CNULL, SYNTAX_BNULL, SYNTAX_WHILE, SYNTAX_DNULL, SYNTAX_DNULL, $3, $5, SYNTAX_DNULL
-        );
+        $$ = syntax_create_while($3, $5, NULL);
     }
     | R_READ V_ID{
         // Verify that the identifier exists.
@@ -178,24 +161,17 @@ stmt
         }
 
         // Create a node using an identifier.
+        syntax_node * id_node; 
         char * identifier = $2;
         data_value * value = symbol_extract(table, identifier);
-        syntax_node * id_node = syntax_create_node(
-            SYNTAX_IDENTIFIER, SYNTAX_CNULL, SYNTAX_BNULL, SYNTAX_CNULL,
-            SYNTAX_DNULL, SYNTAX_DNULL, id_node, SYNTAX_DNULL, SYNTAX_DNULL
-        );
+        id_node = syntax_create_value(SYNTAX_IDENTIFIER, identifier, value);
 
         // Create a node of INSTRUCTION READ
-        $$ = syntax_create_node(
-            SYNTAX_INSTRUCTION, SYNTAX_CNULL, SYNTAX_BNULL, SYNTAX_READ,
-            SYNTAX_DNULL, SYNTAX_DNULL, id_node, SYNTAX_DNULL, SYNTAX_DNULL
-        );
+        $$ = syntax_create_read(id_node, NULL, NULL);
     }
     | R_PRINT expr {
         // Create a node of INSTRUCTION PRINT
-        $$ = syntax_create_node(
-            SYNTAX_INSTRUCTION, SYNTAX_CNULL, SYNTAX_BNULL, SYNTAX_PRINT, SYNTAX_DNULL, SYNTAX_DNULL, $2, SYNTAX_DNULL, SYNTAX_DNULL
-        );
+        $$ = syntax_create_print($2, NULL, NULL);
     }
     | R_BEGIN opt_stmts R_END{
         // Skip creation and go directly to OPT_STMTS, then STMT_LST, then STMT.
@@ -206,17 +182,11 @@ stmt
 expression
     : expr {
         // Create a node of INSTRUCTION EXPRESSION
-        $$ = syntax_create_node(
-            SYNTAX_INSTRUCTION, SYNTAX_ZERO, SYNTAX_BNULL, SYNTAX_EXPRESSION,
-            SYNTAX_DNULL, SYNTAX_DNULL, $1, SYNTAX_DNULL, SYNTAX_DNULL
-        );
+        $$ = syntax_create_expression(SYNTAX_ZERO, $1, NULL, NULL);
     }
     | expr relop expr {
         // Create a node of INSTRUCTION EXPRESSION
-        $$ = syntax_create_node(
-            SYNTAX_INSTRUCTION, $2, SYNTAX_BNULL, SYNTAX_EXPRESSION,
-            SYNTAX_DNULL, SYNTAX_DNULL, $1, $3, SYNTAX_DNULL
-        );
+        $$ = syntax_create_expression($2, $1, $3, NULL);
 
         // Type Check TBD.
     }
@@ -225,28 +195,19 @@ expression
 expr
     : expr S_PLUS term {
         // Create a node of INSTRUCTION EXPR
-        $$ = syntax_create_node(
-            SYNTAX_INSTRUCTION, SYNTAX_SUM, SYNTAX_BNULL, SYNTAX_EXPR,
-            SYNTAX_DNULL, SYNTAX_DNULL, $1, $3, SYNTAX_DNULL
-        );
+        $$ = syntax_create_expr(SYNTAX_SUM, $1, $3, NULL);
 
         // Type Check TBD.
     }
     | expr S_MINUS term {
         // Create a node of INSTRUCTION EXPR
-        $$ = syntax_create_node(
-            SYNTAX_INSTRUCTION, SYNTAX_SUBSTRACT, SYNTAX_BNULL, SYNTAX_EXPR,
-            SYNTAX_DNULL, SYNTAX_DNULL, $1, $3, SYNTAX_DNULL
-        );
+        $$ = syntax_create_expr(SYNTAX_SUBSTRACT, $1, $3, NULL);
 
         // Type Check TBD.
     }
     | signo term {
         // Create a node of INSTRUCTION EXPR
-        $$ = syntax_create_node(
-            SYNTAX_INSTRUCTION, SYNTAX_NEGATIVE, SYNTAX_BNULL, SYNTAX_EXPR,
-            SYNTAX_DNULL, SYNTAX_DNULL, $2, SYNTAX_DNULL, SYNTAX_DNULL
-        );
+        $$ = syntax_create_expr($1, $2, NULL, NULL);
 
         // Type Check TBD.
     }
@@ -259,19 +220,13 @@ expr
 term
     : term S_ASTERISK factor {
         // Create a node of INSTRUCTION TERM
-        $$ = syntax_create_node(
-            SYNTAX_INSTRUCTION, SYNTAX_MULTIPLY, SYNTAX_BNULL, SYNTAX_TERM,
-            SYNTAX_DNULL, SYNTAX_DNULL, $1, $3, SYNTAX_DNULL
-        );
+        $$ = syntax_create_term(SYNTAX_MULTIPLY, $1, $3, NULL);
 
         // Type Check TBD.
     }
     | term S_SLASH factor {
         // Create a node of INSTRUCTION TERM
-        $$ = syntax_create_node(
-            SYNTAX_INSTRUCTION, SYNTAX_DIVIDE, SYNTAX_BNULL, SYNTAX_TERM,
-            SYNTAX_DNULL, SYNTAX_DNULL, $1, $3, SYNTAX_DNULL
-        );
+        $$ = syntax_create_term(SYNTAX_DIVIDE, $1, $3, NULL);
 
         // Type Check TBD.
     }
@@ -294,34 +249,28 @@ factor
         }
 
         // Create a node using an identifier.
+        syntax_node * id_node;
         char * identifier = $1;
         data_value * value = symbol_extract(table, identifier);
-        syntax_node * id_node = syntax_create_node(
-            SYNTAX_IDENTIFIER, SYNTAX_CNULL, SYNTAX_BNULL, SYNTAX_CNULL,
-            identifier, value, SYNTAX_DNULL, SYNTAX_DNULL, SYNTAX_DNULL
-        );
+        id_node = syntax_create_value(SYNTAX_IDENTIFIER, identifier, value);
 
         // Return the newly created node.
         $$ = id_node;
     }
     | V_NUMINT{
         // Create a node using a value.
+        syntax_node * int_node;
         data_value * value = data_create_integer(0);
-        syntax_node * int_node = syntax_create_node(
-            SYNTAX_VALUE, SYNTAX_CNULL, SYNTAX_BNULL, SYNTAX_CNULL,
-            SYNTAX_DNULL, value, SYNTAX_DNULL, SYNTAX_DNULL, SYNTAX_DNULL
-        );
+        int_node = syntax_create_value(SYNTAX_VALUE, NULL, value);
 
         // Return the newly created node.
         $$ = int_node;
     }
     | V_NUMFLOAT{
         // Create a node using a value.
+        syntax_node * float_node;
         data_value * value = data_create_float(0.0);
-        syntax_node * float_node = syntax_create_node(
-            SYNTAX_VALUE, SYNTAX_CNULL, SYNTAX_BNULL, SYNTAX_CNULL,
-            SYNTAX_DNULL, value, SYNTAX_DNULL, SYNTAX_DNULL, SYNTAX_DNULL
-        );
+        float_node = syntax_create_value(SYNTAX_VALUE, NULL, value);
 
         // Return the newly created node.
         $$ = float_node;
@@ -347,7 +296,9 @@ relop
 ;
 
 signo
-    : S_NEGATIVE
+    : S_NEGATIVE {
+        $$ = SYNTAX_ZERO;
+    }
 ;
 %%
 
