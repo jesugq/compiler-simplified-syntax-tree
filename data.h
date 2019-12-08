@@ -5,6 +5,7 @@
 // Definitions
 #define DATA_INTEGER    'I'
 #define DATA_FLOAT      'F'
+#define DATA_ZERO       'z'
 #define DATA_SUM        '+'
 #define DATA_SUBSTRACT  '-'
 #define DATA_MULTIPLY   '*'
@@ -21,6 +22,7 @@ typedef struct data_value {
 } data_value;
 
 bool data_numtype_match(data_value * one, data_value * two);
+// Missing: bool data_expression.
 data_value * data_create_integer(int);
 data_value * data_create_float(float);
 data_value * data_operation(data_value * one, data_value * two, char operation);

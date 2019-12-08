@@ -64,30 +64,11 @@ decls
 ;
 
 dec
-    : R_VAR V_ID S_COLON tipo {
-        // Verify the identifier is unique.
-        if (symbol_exists(table, $2)) {
-            bison_error_identifier_repeated($2);
-            YYERROR;
-        }
-
-        // Verify that the identifier was inserted.
-        if (!symbol_insert(table, $2, $4)) {
-            bison_error_identifier_failed($2);
-            YYERROR;
-        }
-    }
+    : R_VAR V_ID S_COLON tipo
 ;
 
 tipo
-    : R_INT {
-        // Return a zero initialized integer data type.
-        $$ = data_create_integer(0);
-    }
-    | R_FLOAT {
-        // Return a zero initialized float data type.
-        $$ = data_create_float(0);
-    }
+    : R_INT
 ;
 
 opt_stmts
@@ -101,20 +82,7 @@ stmt_lst
 ;
 
 stmt
-    : V_ID S_ASSIGN expr {
-        // Verify that the identifier exists.
-        if (!symbol_exists(table, $1)) {
-            bison_error_identifier_missing($1);
-            YYERROR;
-        }
-
-        // Type check the identifier's data and the expr
-        data_value * id = symbol_extract(table, $1);
-        if (!data_numtype_match(id, $3)) {
-            bison_error_data_misassign($1, id, $3);
-            YYERROR;
-        }
-    }
+    : V_ID S_ASSIGN expr
     | R_IF S_PARENTL expression S_PARENTR stmt
     | R_IFELSE S_PARENTL expression S_PARENTR stmt stmt
     | R_WHILE S_PARENTL expression S_PARENTR stmt
@@ -125,83 +93,24 @@ stmt
 
 expression
     : expr
-    | expr relop expr {
-        // Type check expr and expr
-        if (!data_numtype_match($1, $3)) {
-            bison_error_data_mismatch($1, $3);
-            YYERROR;
-        }
-    }
+    | expr relop expr
 ;
 
 expr
-    : expr S_PLUS term {
-        // Type check expr and term
-        if (!data_numtype_match($1, $3)) {
-            bison_error_data_mismatch($1, $3);
-            YYERROR;
-        }
-
-        // Return the operation of both.
-        $$ = data_operation($1, $3, DATA_SUM);
-
-    }
-    | expr S_MINUS term {
-        // Type check expr and term
-        if (!data_numtype_match($1, $3)) {
-            bison_error_data_mismatch($1, $3);
-            YYERROR;
-        }
-
-        // Return the operation of both.
-        $$ = data_operation($1, $3, DATA_SUBSTRACT);
-    }
-    | signo term {
-        // Return the operation of the single term.
-        $$ = data_negative($2);
-    }
+    : expr S_PLUS term
+    | expr S_MINUS term
     | term
 ;
 
 term
-    : term S_ASTERISK factor {
-        // Type check term and factor.
-        if (!data_numtype_match($1, $3)) {
-            bison_error_data_mismatch($1, $3);
-            YYERROR;
-        }
-
-        // Return the operation of both.
-        $$ = data_operation($1, $3, DATA_MULTIPLY);
-    }
-    | term S_SLASH factor {
-        // Type check term and factor.
-        if (!data_numtype_match($1, $3)) {
-            bison_error_data_mismatch($1, $3);
-            YYERROR;
-        }
-
-        // Return the operation of both.
-        $$ = data_operation($1, $3, DATA_DIVIDE);
-    }
+    : term S_ASTERISK factor
+    | term S_SLASH factor
     | factor
 ;
 
 factor
-    : S_PARENTL expr S_PARENTR {
-        // Return the data between the parentheses.
-        $$ = $2;
-    }
-    | V_ID {
-        // Verify that the identifier exists.
-        if (!symbol_exists(table, $1)) {
-            bison_error_identifier_missing($1);
-            YYERROR;
-        }
-
-        // Return the data of the identifier.
-        $$ = symbol_extract(table, $1);
-    }
+    : S_PARENTL expr S_PARENTR
+    | V_ID
     | V_NUMINT
     | V_NUMFLOAT
 ;
