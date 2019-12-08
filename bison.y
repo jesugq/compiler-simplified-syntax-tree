@@ -32,10 +32,11 @@ void bison_error_data_misassign(char *, data_value *, data_value *);
 
 // Bison Union
 %union {
+    char operation;
     int instruction;
     char * identifier;
     struct data_value * value;
-    struct tree_node * node;
+    struct syntax_node * node;
 }
 
 // Bison Terminal Types
@@ -50,12 +51,17 @@ void bison_error_data_misassign(char *, data_value *, data_value *);
 %token<value> V_NUMFLOAT
 
 // Bison Non Terminal Types
-// %type<node> stmt_lst stmt expression expr term factor relop signo
+%type<operation> relop
+%type<value> tipo
+%type<node> opt_stmts stmt_lst stmt expression expr term factor
 
 // Grammar
 %%
 prog
-    : opt_decls R_BEGIN opt_stmts R_END
+    : opt_decls R_BEGIN opt_stmts R_END {
+        // The parent node is the result of all the statements.
+        node = $3;
+    }
 ;
 
 opt_decls
@@ -69,64 +75,275 @@ decls
 ;
 
 dec
-    : R_VAR V_ID S_COLON tipo
+    : R_VAR V_ID S_COLON tipo {
+        // Verify that the identifier is unique.
+        if (symbol_exists(table, $2)) {
+            bison_error_identifier_repeated($2);
+            YYERROR;
+        }
+
+        // Verify that the identifier was inserted.
+        if (!symbol_insert(table, $2, $4)) {
+            bison_error_identifier_failed($2);
+            YYERROR;
+        }
+    }
 ;
 
 tipo
-    : R_INT
+    : R_INT {
+        // Return a zero initialized integer data value.
+        $$ = data_create_integer(0);
+    }
+    | R_FLOAT {
+        // Return a zero initialized float data value.
+        $$ = data_create_float(0.0);
+    }
 ;
 
 opt_stmts
-    : stmt_lst
-    | %empty
+    : stmt_lst {
+        // Skip creation and go directly to STMT_LST, then STMT.
+        $$ = $1;
+    }
+    | %empty {
+        $$ = syntax_initialize();
+    }
 ;
 
 stmt_lst
-    : stmt S_SEMICOLON stmt_lst
-    | stmt
+    : stmt S_SEMICOLON stmt_lst {
+        // Create a node of INSTRUCTION STMT.
+        $$ = syntax_create_node(
+            SYNTAX_INSTRUCTION, SYNTAX_CNULL, SYNTAX_BNULL, SYNTAX_STMT,
+            SYNTAX_DNULL, SYNTAX_DNULL, $1, $3, SYNTAX_DNULL
+        );
+    }
+    | stmt {
+        // Create a node of INSTRUCTION STMT
+        $$ = syntax_create_node(
+            SYNTAX_INSTRUCTION, SYNTAX_CNULL, SYNTAX_BNULL, SYNTAX_STMT,
+            SYNTAX_DNULL, SYNTAX_DNULL, $1, SYNTAX_DNULL, SYNTAX_DNULL
+        );
+    }
 ;
 
 stmt
-    : V_ID S_ASSIGN expr
-    | R_IF S_PARENTL expression S_PARENTR stmt
-    | R_IFELSE S_PARENTL expression S_PARENTR stmt stmt
-    | R_WHILE S_PARENTL expression S_PARENTR stmt
-    | R_READ V_ID
-    | R_PRINT expr
-    | R_BEGIN opt_stmts R_END
+    : V_ID S_ASSIGN expr {
+        // Verify that the identifier exists.
+        if (!symbol_exists(table, $1)) {
+            bison_error_identifier_missing($1);
+            YYERROR;
+        }
+
+        // Create a node using an identifier.
+        char * identifier = $1;
+        data_value * value = symbol_extract(table, identifier);
+        syntax_node * id_node = syntax_create_node(
+            SYNTAX_IDENTIFIER, SYNTAX_CNULL, SYNTAX_BNULL, SYNTAX_CNULL,
+            identifier, value, SYNTAX_DNULL, SYNTAX_DNULL, SYNTAX_DNULL
+        );
+
+        // Create a node of INSTRUCTION ASSIGN
+        $$ = syntax_create_node(
+            SYNTAX_INSTRUCTION, SYNTAX_CNULL, SYNTAX_BNULL, SYNTAX_ASSIGN,
+            SYNTAX_DNULL, SYNTAX_DNULL, id_node, $3, SYNTAX_DNULL
+        );
+        
+        // Type Check TBD.
+    }
+    | R_IF S_PARENTL expression S_PARENTR stmt{
+        // Create a node of INSTRUCTION IF
+        $$ = syntax_create_node(
+            SYNTAX_INSTRUCTION, SYNTAX_CNULL, SYNTAX_BNULL, SYNTAX_IF, SYNTAX_DNULL, SYNTAX_DNULL, $3, $5, SYNTAX_DNULL
+        );
+    }
+    | R_IFELSE S_PARENTL expression S_PARENTR stmt stmt{
+        // Create a node of INSTRUCTION IFELSE
+        $$ = syntax_create_node(
+            SYNTAX_INSTRUCTION, SYNTAX_CNULL, SYNTAX_BNULL, SYNTAX_IFELSE, SYNTAX_DNULL, SYNTAX_DNULL, $3, $5, $6
+        );
+    }
+    | R_WHILE S_PARENTL expression S_PARENTR stmt{
+        // Create a node of INSTRUCTION WHILE
+        $$ = syntax_create_node(
+            SYNTAX_INSTRUCTION, SYNTAX_CNULL, SYNTAX_BNULL, SYNTAX_WHILE, SYNTAX_DNULL, SYNTAX_DNULL, $3, $5, SYNTAX_DNULL
+        );
+    }
+    | R_READ V_ID{
+        // Verify that the identifier exists.
+        if (!symbol_exists(table, $2)) {
+            bison_error_identifier_missing($2);
+            YYERROR;
+        }
+
+        // Create a node using an identifier.
+        char * identifier = $2;
+        data_value * value = symbol_extract(table, identifier);
+        syntax_node * id_node = syntax_create_node(
+            SYNTAX_IDENTIFIER, SYNTAX_CNULL, SYNTAX_BNULL, SYNTAX_CNULL,
+            SYNTAX_DNULL, SYNTAX_DNULL, id_node, SYNTAX_DNULL, SYNTAX_DNULL
+        );
+
+        // Create a node of INSTRUCTION READ
+        $$ = syntax_create_node(
+            SYNTAX_INSTRUCTION, SYNTAX_CNULL, SYNTAX_BNULL, SYNTAX_READ,
+            SYNTAX_DNULL, SYNTAX_DNULL, id_node, SYNTAX_DNULL, SYNTAX_DNULL
+        );
+    }
+    | R_PRINT expr {
+        // Create a node of INSTRUCTION PRINT
+        $$ = syntax_create_node(
+            SYNTAX_INSTRUCTION, SYNTAX_CNULL, SYNTAX_BNULL, SYNTAX_PRINT, SYNTAX_DNULL, SYNTAX_DNULL, $2, SYNTAX_DNULL, SYNTAX_DNULL
+        );
+    }
+    | R_BEGIN opt_stmts R_END{
+        // Skip creation and go directly to OPT_STMTS, then STMT_LST, then STMT.
+        $$ = $2;
+    }
 ;
 
 expression
-    : expr
-    | expr relop expr
+    : expr {
+        // Create a node of INSTRUCTION EXPRESSION
+        $$ = syntax_create_node(
+            SYNTAX_INSTRUCTION, SYNTAX_ZERO, SYNTAX_BNULL, SYNTAX_EXPRESSION,
+            SYNTAX_DNULL, SYNTAX_DNULL, $1, SYNTAX_DNULL, SYNTAX_DNULL
+        );
+    }
+    | expr relop expr {
+        // Create a node of INSTRUCTION EXPRESSION
+        $$ = syntax_create_node(
+            SYNTAX_INSTRUCTION, $2, SYNTAX_BNULL, SYNTAX_EXPRESSION,
+            SYNTAX_DNULL, SYNTAX_DNULL, $1, $3, SYNTAX_DNULL
+        );
+
+        // Type Check TBD.
+    }
 ;
 
 expr
-    : expr S_PLUS term
-    | expr S_MINUS term
-    | signo term
-    | term
+    : expr S_PLUS term {
+        // Create a node of INSTRUCTION EXPR
+        $$ = syntax_create_node(
+            SYNTAX_INSTRUCTION, SYNTAX_SUM, SYNTAX_BNULL, SYNTAX_EXPR,
+            SYNTAX_DNULL, SYNTAX_DNULL, $1, $3, SYNTAX_DNULL
+        );
+
+        // Type Check TBD.
+    }
+    | expr S_MINUS term {
+        // Create a node of INSTRUCTION EXPR
+        $$ = syntax_create_node(
+            SYNTAX_INSTRUCTION, SYNTAX_SUBSTRACT, SYNTAX_BNULL, SYNTAX_EXPR,
+            SYNTAX_DNULL, SYNTAX_DNULL, $1, $3, SYNTAX_DNULL
+        );
+
+        // Type Check TBD.
+    }
+    | signo term {
+        // Create a node of INSTRUCTION EXPR
+        $$ = syntax_create_node(
+            SYNTAX_INSTRUCTION, SYNTAX_NEGATIVE, SYNTAX_BNULL, SYNTAX_EXPR,
+            SYNTAX_DNULL, SYNTAX_DNULL, $2, SYNTAX_DNULL, SYNTAX_DNULL
+        );
+
+        // Type Check TBD.
+    }
+    | term {
+        // Skip creation and go directly to TERM
+        $$ = $1;
+    }
 ;
 
 term
-    : term S_ASTERISK factor
-    | term S_SLASH factor
-    | factor
+    : term S_ASTERISK factor {
+        // Create a node of INSTRUCTION TERM
+        $$ = syntax_create_node(
+            SYNTAX_INSTRUCTION, SYNTAX_MULTIPLY, SYNTAX_BNULL, SYNTAX_TERM,
+            SYNTAX_DNULL, SYNTAX_DNULL, $1, $3, SYNTAX_DNULL
+        );
+
+        // Type Check TBD.
+    }
+    | term S_SLASH factor {
+        // Create a node of INSTRUCTION TERM
+        $$ = syntax_create_node(
+            SYNTAX_INSTRUCTION, SYNTAX_DIVIDE, SYNTAX_BNULL, SYNTAX_TERM,
+            SYNTAX_DNULL, SYNTAX_DNULL, $1, $3, SYNTAX_DNULL
+        );
+
+        // Type Check TBD.
+    }
+    | factor {
+        // Skip creation and go directly to FACTOR
+        $$ = $1;
+    }
 ;
 
 factor
-    : S_PARENTL expr S_PARENTR
-    | V_ID
-    | V_NUMINT
-    | V_NUMFLOAT
+    : S_PARENTL expr S_PARENTR{
+        // Skip creation and go directly to EXPR.
+        $$ = $2;
+    }
+    | V_ID {
+        // Verify that the identifier exists.
+        if (!symbol_exists(table, $1)) {
+            bison_error_identifier_missing($1);
+            YYERROR;
+        }
+
+        // Create a node using an identifier.
+        char * identifier = $1;
+        data_value * value = symbol_extract(table, identifier);
+        syntax_node * id_node = syntax_create_node(
+            SYNTAX_IDENTIFIER, SYNTAX_CNULL, SYNTAX_BNULL, SYNTAX_CNULL,
+            identifier, value, SYNTAX_DNULL, SYNTAX_DNULL, SYNTAX_DNULL
+        );
+
+        // Return the newly created node.
+        $$ = id_node;
+    }
+    | V_NUMINT{
+        // Create a node using a value.
+        data_value * value = data_create_integer(0);
+        syntax_node * int_node = syntax_create_node(
+            SYNTAX_VALUE, SYNTAX_CNULL, SYNTAX_BNULL, SYNTAX_CNULL,
+            SYNTAX_DNULL, value, SYNTAX_DNULL, SYNTAX_DNULL, SYNTAX_DNULL
+        );
+
+        // Return the newly created node.
+        $$ = int_node;
+    }
+    | V_NUMFLOAT{
+        // Create a node using a value.
+        data_value * value = data_create_float(0.0);
+        syntax_node * float_node = syntax_create_node(
+            SYNTAX_VALUE, SYNTAX_CNULL, SYNTAX_BNULL, SYNTAX_CNULL,
+            SYNTAX_DNULL, value, SYNTAX_DNULL, SYNTAX_DNULL, SYNTAX_DNULL
+        );
+
+        // Return the newly created node.
+        $$ = float_node;
+    }
 ;
 
 relop
-    : S_LESS
-    | S_GREATER
-    | S_EQUALS
-    | S_LTE
-    | S_GTE
+    : S_LESS {
+        $$ = SYNTAX_LESS;
+    }
+    | S_GREATER {
+        $$ = SYNTAX_GREATER;
+    }
+    | S_EQUALS {
+        $$ = SYNTAX_EQUALS;
+    }
+    | S_LTE {
+        $$ = SYNTAX_LTE;
+    }
+    | S_GTE {
+        $$ = SYNTAX_GTE;
+    }
 ;
 
 signo
@@ -288,7 +505,7 @@ int main(int argc, char * argv[]) {
 
     // Flex and Bison parsing.
     table = symbol_initialize(0);
-    node = NULL;
+    node = syntax_initialize();
     yyparse();
     symbol_print(table);
 

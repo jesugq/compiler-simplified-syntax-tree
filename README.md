@@ -148,7 +148,8 @@ signo
 Bison has to handle the values that each terminal returns inside of an union. The union value can be one of the following.
 ```c
 %union {
-    int code;                   // Integer code of the terminal read.
+    char operation;             // Operation to do of the non terminal read.
+    int instruction;            // Integer instruction of the terminal read.
     char * identifier;          // String of the idenfitier read.
     struct data_value value;    // Value that can either be integer or float.
     struct tree_node * node;    // Node of this expression.
@@ -293,7 +294,7 @@ Executes a scanf and assigns the value read to the symbol table value of the ide
 * nodetype      is INSTRUCTION
 * operation     is NULL
 * evaluation    is NULL
-* instruction   is WHILE
+* instruction   is READ
 * identifier    is NULL
 * value         is NULL
 * nodea         is IDENTIFIER
@@ -312,18 +313,6 @@ Executes a printf of the value inside of the identifier in nodea.
 * nodeb         is NULL
 * nodec         is NULL
 
-Node of type BEGINEND
-Executes the instruction in nodea, and then the instruction in nodeb if it is not null. It is basically the same as an instruction of STMT.
-* nodetype      is INSTRUCTION
-* operation     is NULL
-* evaluation    is NULL
-* instruction   is STMT
-* identifier    is NULL
-* value         is NULL
-* nodea         is INSTRUCTION of ASSIGN IF IFELSE WHILE READ PRINT or BEGINEND
-* nodeb         is INSTRUCTION of STMT
-* nodec         is NULL
-
 Node of type EXPRESSION
 Evaluates the value in nodea with the value in nodec using the operation in this node.
 * nodetype      is INSTRUCTION
@@ -333,7 +322,7 @@ Evaluates the value in nodea with the value in nodec using the operation in this
 * identifier    is NULL
 * value         is NULL
 * nodea         is IDENTIFIER or VALUE
-* nodeb         is IDENTIFIER or VALUE
+* nodeb         is IDENTIFIER or VALUE or NULL
 * nodec         is NULL
 
 Node of type EXPR

@@ -10,6 +10,11 @@
 #define SYNTAX_IDENTIFIER   '1'
 #define SYNTAX_VALUE        '2'
 
+// NULL Types
+#define SYNTAX_DNULL        NULL
+#define SYNTAX_CNULL        '\0'
+#define SYNTAX_BNULL        false
+
 // Instructions
 #define SYNTAX_STMT         'S'
 #define SYNTAX_ASSIGN       'A'
@@ -51,6 +56,7 @@ typedef struct syntax_node {
     struct syntax_node * nodec;
 } syntax_node;
 
+syntax_node * syntax_initialize();
 syntax_node * syntax_create_node(char, char, bool, char, char*, data_value*,
     syntax_node*, syntax_node*, syntax_node*);
 
