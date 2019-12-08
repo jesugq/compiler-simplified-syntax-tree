@@ -10,7 +10,7 @@
 #endif
 
 // Declarations
-int flex_left_value_code(int);
+int flex_left_value_instruction(int);
 int flex_left_value_identifier(int);
 int flex_left_value_integer(int);
 int flex_left_value_float(int);
@@ -21,32 +21,32 @@ DIGIT   [0-9]
 DOT     [.]
 
 %%
-"begin"     { return flex_left_value_code(R_BEGIN); }
-"end"       { return flex_left_value_code(R_END); }
-"var"       { return flex_left_value_code(R_VAR); }
-"int"       { return flex_left_value_code(R_INT); }
-"float"     { return flex_left_value_code(R_FLOAT); }
-"if"        { return flex_left_value_code(R_IF); }
-"ifelse"    { return flex_left_value_code(R_IFELSE); }
-"while"     { return flex_left_value_code(R_WHILE); }
-"read"      { return flex_left_value_code(R_READ); }
-"print"     { return flex_left_value_code(R_PRINT); }
+"begin"     { return flex_left_value_instruction(R_BEGIN); }
+"end"       { return flex_left_value_instruction(R_END); }
+"var"       { return flex_left_value_instruction(R_VAR); }
+"int"       { return flex_left_value_instruction(R_INT); }
+"float"     { return flex_left_value_instruction(R_FLOAT); }
+"if"        { return flex_left_value_instruction(R_IF); }
+"ifelse"    { return flex_left_value_instruction(R_IFELSE); }
+"while"     { return flex_left_value_instruction(R_WHILE); }
+"read"      { return flex_left_value_instruction(R_READ); }
+"print"     { return flex_left_value_instruction(R_PRINT); }
 
-";"     { return flex_left_value_code(S_SEMICOLON); }
-":"     { return flex_left_value_code(S_COLON); }
-"<-"    { return flex_left_value_code(S_ASSIGN); }
-"+"     { return flex_left_value_code(S_PLUS); }
-"-"     { return flex_left_value_code(S_MINUS); }
-"*"     { return flex_left_value_code(S_ASTERISK); }
-"/"     { return flex_left_value_code(S_SLASH); }
-"("     { return flex_left_value_code(S_PARENTL); }
-")"     { return flex_left_value_code(S_PARENTR); }
-"~"     { return flex_left_value_code(S_NEGATIVE); }
-"<"     { return flex_left_value_code(S_LESS); }
-">"     { return flex_left_value_code(S_GREATER); }
-"="     { return flex_left_value_code(S_EQUALS); }
-"<="    { return flex_left_value_code(S_LTE); }
-">="    { return flex_left_value_code(S_GTE); }
+";"     { return flex_left_value_instruction(S_SEMICOLON); }
+":"     { return flex_left_value_instruction(S_COLON); }
+"<-"    { return flex_left_value_instruction(S_ASSIGN); }
+"+"     { return flex_left_value_instruction(S_PLUS); }
+"-"     { return flex_left_value_instruction(S_MINUS); }
+"*"     { return flex_left_value_instruction(S_ASTERISK); }
+"/"     { return flex_left_value_instruction(S_SLASH); }
+"("     { return flex_left_value_instruction(S_PARENTL); }
+")"     { return flex_left_value_instruction(S_PARENTR); }
+"~"     { return flex_left_value_instruction(S_NEGATIVE); }
+"<"     { return flex_left_value_instruction(S_LESS); }
+">"     { return flex_left_value_instruction(S_GREATER); }
+"="     { return flex_left_value_instruction(S_EQUALS); }
+"<="    { return flex_left_value_instruction(S_LTE); }
+">="    { return flex_left_value_instruction(S_GTE); }
 "\n"    { yylineno++; }
 
 {DIGIT}+                    { return flex_left_value_integer(V_NUMINT); }
@@ -55,13 +55,13 @@ DOT     [.]
 %%
 
 /**
- * Flex Left Value Code returns the terminal code to Flex and updates Bison's
- * code attribute with the terminal code.
+ * Flex Left Value Instruction returns the terminal code to Flex and updates 
+ * Bison's code attribute with the terminal code.
  * @param   code    Terminal code.
  * @return  Terminal code.
  */
-int flex_left_value_code(int code) {
-    yylval.code = code;
+int flex_left_value_instruction(int code) {
+    yylval.instruction = code;
     return code;
 }
 

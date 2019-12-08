@@ -5,12 +5,12 @@
 #endif
 
 // Definitions
+// Node Types
 #define SYNTAX_INSTRUCTION  '0'
-#define SYNTAX_OPERATION    '1'
-#define SYNTAX_EVALUATION   '2'
-#define SYNTAX_TEXT         '3'
-#define SYNTAX_VALUE        '4'
+#define SYNTAX_IDENTIFIER   '1'
+#define SYNTAX_VALUE        '2'
 
+// Instructions
 #define SYNTAX_STMT         'S'
 #define SYNTAX_ASSIGN       'A'
 #define SYNTAX_IF           'I'
@@ -23,29 +23,37 @@
 #define SYNTAX_RELOP        'r'
 #define SYNTAX_EXPR         'e'
 #define SYNTAX_TERM         't'
-#define SYNTAX_IDENTIFIER   'v'
-#define SYNTAX_INTEGER      'i'
-#define SYNTAX_FLOAT        'f'
+#define SYNTAX_FACTOR       'f'
 
+// Operations
+#define SYNTAX_LESS         '<'
+#define SYNTAX_GREATER      '>'
+#define SYNTAX_EQUALS       '='
+#define SYNTAX_LTE          'l'
+#define SYNTAX_GTE          'g'
 #define SYNTAX_ZERO         'z'
 #define SYNTAX_SUM          '+'
 #define SYNTAX_SUBSTRACT    '-'
 #define SYNTAX_MULTIPLY     '*'
 #define SYNTAX_DIVIDE       '/'
+#define SYNTAX_NEGATIVE     '~'
 
 // Declarations
 typedef struct syntax_node {
     char nodetype;
-    char nodeinfo;
+    char operation;
     bool evaluation;
+    char instruction;
     char * identifier;
     data_value * value;
-    syntax_node * node_a;
-    syntax_node * node_b;
-    syntax_node * node_c;
+    syntax_node * nodea;
+    syntax_node * nodeb;
+    syntax_node * nodec;
 } syntax_node;
 
-syntax_node * syntax_create_node(char, char, bool, char *, data_value *, syntax_node *, syntax_node *, syntax_node *);
+syntax_node * syntax_create_node(
+    char, bool, char*, data_value*, syntax_node*, syntax_node*, syntax_node*
+);
 
 // syntax_node * syntax_create_stmt();
 // syntax_node * syntax_create_assign();

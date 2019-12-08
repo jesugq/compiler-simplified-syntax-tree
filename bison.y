@@ -30,7 +30,10 @@ void bison_error_data_misassign(char *, data_value *, data_value *);
 
 // Bison Union
 %union {
+    int instruction;
+    char * identifier;
     struct data_value * value;
+    struct tree_node * node;
 }
 
 // Bison Terminal Types
@@ -93,7 +96,11 @@ stmt
 
 expression
     : expr
-    | expr relop expr
+    | expr S_LESS expr
+    | expr S_GREATER expr
+    | expr S_EQUALS expr
+    | expr S_LTE expr
+    | expr S_GTE expr
 ;
 
 expr

@@ -107,7 +107,11 @@ stmt
 
 expression
     : expr
-    | expr relop expr
+    | expr S_LESS expr
+    | expr S_GREATER expr
+    | expr S_EQUALS expr
+    | expr S_LTE expr
+    | expr S_GTE expr
 ;
 
 expr
@@ -130,12 +134,13 @@ factor
     | V_NUMFLOAT
 ;
 
-relop
-    : S_LESS
-    | S_GREATER
-    | S_EQUALS
-    | S_LTE
-    | S_GTE
+// Relop was forced to stay inside of expression to save a node creation.
+// relop
+//     : S_LESS
+//     | S_GREATER
+//     | S_EQUALS
+//     | S_LTE
+//    | S_GTE
 ;
 
 signo
@@ -212,9 +217,10 @@ typedef struct symbol_table {
 The Syntax Tree uses three node pointers defining what to use, its type, such as an instruction or a value, and information regarding it.
 ```c
 typedef struct syntax_node {
-    char nodetype;          // Type of this node, used to handle the data.
-    char nodeinfo;          // Info of this node, if it is an instruction or an operation.
+    char nodetype;          // Type of this node.
+    char operation;         // Operation of this node.
     bool evaluation;        // Evaluation of the node.
+    char instruction;       // Instruction of this node.
     char * identifier;      // Identifier of the node
     data_value * value;     // Value of the node.
     syntax_node * nodea;    // First child node.
@@ -226,43 +232,164 @@ typedef struct syntax_node {
 ## Tree Execution
 The Syntax Tree nodes can be of one of many types, such as STMT, IF, ASSIGN, etc. The types and how they have to be created and executed will be shown in the following:
 
-NOT YET FINISHED
 ```c
 Node of type STMT
-Executes the instruction in node_a and then the instruction in node_b if not NULL.
-* nodetype is INSTRUCTION
-* info is INSTRUCTION of STMT
-* node_a is INSTRUCTION of ASSIGN IF IFELSE WHILE READ PRINT or BEGINEND
-* node_b is INSTRUCTION of STMT
-* node_c is NULL
-* value is NULL
+Executes the instruction in nodea and then the instruction in nodeb if it is not NULL.
+* nodetype      is INSTRUCTION
+* operation     is NULL
+* evaluation    is NULL
+* instruction   is STMT
+* identifier    is NULL
+* value         is NULL
+* nodea         is INSTRUCTION of ASSIGN IF IFELSE WHILE READ PRINT or BEGINEND
+* nodeb         is INSTRUCTION of STMT
+* nodec         is NULL
 
 Node of type ASSIGN
-Assigns the identifier in node_a the value in node_b.
-* nodetype is INSTRUCTION
-* info is INSTRUCTION of ASSIGN
-* node_a is INSTRUCTION of EXPR
-* node_c is NULL
-* value is NULL
+Assigns the value in nodeb to the symbol table value of the identifier in nodea.
+* nodetype      is INSTRUCTION
+* operation     is NULL
+* evaluation    is NULL
+* instruction   is ASSIGN
+* identifier    is NULL
+* value         is NULL
+* nodea         is IDENTIFIER
+* nodeb         is IDENTIFIER or VALUE
+* nodec         is NULL
 
 Node of type IF
-Executes the instruction in node_b if the value in node_a is true.
-* nodetype is INSTRUCTION
-* info is INSTRUCTION of IF
-* node_a is INSTRUCTION of EXPRESSION
-* node_b is INSTRUCTION of STMT
-* node_c is NULL
-* value is NULL
+Executes the instruction in nodeb if the evaluation in nodea is true.
+* nodetype      is INSTRUCTION
+* operation     is NULL
+* evaluation    is NULL
+* instruction   is IF
+* identifier    is NULL
+* value         is NULL
+* nodea         is INSTRUCTION of EXPRESSION
+* nodeb         is INSTRUCTION of ASSIGN IF IFELSE WHILE READ PRINT or BEGINEND
+* nodec         is NULL
 
 Node of type IFELSE
-Executes the instruction on node_a if the value in node_b is true. node_c is executed otherwise.
-* nodetype is INSTRUCTION
-* info is INSTRUCTION of IFELSE
-* node_a is INSTRUCTION of EXPRESSION
-* node_b is INSTRUCTION of STMT
-* node_c is INSTRUCTION of STMT
-* value is NULL
+Executes the instruction in nodeb if the evaluattion in nodea is true. Otherwise it executes the instruction in nodec.
+* nodetype      is INSTRUCTION
+* operation     is NULL
+* evaluation    is NULL
+* instruction   is IFELSE
+* identifier    is NULL
+* value         is NULL
+* nodea         is INSTRUCTION of EXPRESSION
+* nodeb         is INSTRUCTION of ASSIGN IF IFELSE WHILE READ PRINT or BEGINEND
+* nodec         is INSTRUCTION of ASSIGN IF IFELSE WHILE READ PRINT or BEGINEND
 
 Node of type WHILE
-Executes the instruction on node_b until the expression in
+Executes the instruction in nodeb while the evaluation in nodea is true.
+* nodetype      is INSTRUCTION
+* operation     is NULL
+* evaluation    is NULL
+* instruction   is WHILE
+* identifier    is NULL
+* value         is NULL
+* nodea         is INSTRUCTION of EXPRESSION
+* nodeb         is INSTRUCTION of ASSIGN IF IFELSE WHILE READ PRINT or BEGINEND
+* nodec         is NULL
+
+Node of type READ
+Executes a scanf and assigns the value read to the symbol table value of the identifier in nodea.
+* nodetype      is INSTRUCTION
+* operation     is NULL
+* evaluation    is NULL
+* instruction   is WHILE
+* identifier    is NULL
+* value         is NULL
+* nodea         is IDENTIFIER
+* nodeb         is NULL
+* nodec         is NULL
+
+Node of type PRINT
+Executes a printf of the value inside of the identifier in nodea.
+* nodetype      is INSTRUCTION
+* operation     is NULL
+* evaluation    is NULL
+* instruction   is PRINT
+* identifier    is NULL
+* value         is NULL
+* nodea         is IDENTIFIER
+* nodeb         is NULL
+* nodec         is NULL
+
+Node of type BEGINEND
+Executes the instruction in nodea, and then the instruction in nodeb if it is not null. It is basically the same as an instruction of STMT.
+* nodetype      is INSTRUCTION
+* operation     is NULL
+* evaluation    is NULL
+* instruction   is STMT
+* identifier    is NULL
+* value         is NULL
+* nodea         is INSTRUCTION of ASSIGN IF IFELSE WHILE READ PRINT or BEGINEND
+* nodeb         is INSTRUCTION of STMT
+* nodec         is NULL
+
+Node of type EXPRESSION
+Evaluates the value in nodea with the value in nodec using the operation in this node.
+* nodetype      is INSTRUCTION
+* operation     is LESS GREATER EQUALS LTE GTE or ZERO
+* evaluation    is TRUE or FALSE
+* instruction   is EXPRESSION
+* identifier    is NULL
+* value         is NULL
+* nodea         is IDENTIFIER or VALUE
+* nodeb         is IDENTIFIER or VALUE
+* nodec         is NULL
+
+Node of type EXPR
+Operates the value in nodea and the value in nodec using the operation in this node.
+* nodetype      is INSTRUCTION
+* operation     is SUM SUBSTRACT NEGATIVE
+* evaluation    is NULL
+* instruction   is EXPR
+* identifier    is NULL
+* value         is INTEGER or FLOAT
+* nodea         is IDENTIFIER or VALUE
+* nodeb         is IDENTIFIER or VALUE
+* nodec         is NULL
+
+Node of type TERM
+Operates the value in nodea and the value in nodec using the operation in this node.
+* nodetype      is INSTRUCTION
+* operation     is MULTIPLY or DIVIDE
+* evaluation    is NULL
+* instruction   is TERM
+* identifier    is NULL
+* value         is INTEGER or FLOAT
+* nodea         is IDENTIFIER or VALUE
+* nodeb         is IDENTIFIER or VALUE
+* nodec         is NULL
+
+Node of type FACTOR
+Does not exist, but it can return one of two types:
+
+Node of type IDENTIFIER
+Returns the value in this node. Since the data_value will be linked to the symbol_table,
+any updates e.g. during while functions should be visible.
+* nodetype      is IDENTIFIER
+* operation     is NULL
+* evaluation    is NULL
+* instruction   is NULL
+* identifier    is IDENTIFIER
+* value         is INTEGER or FLOAT
+* nodea         is NULL
+* nodeb         is NULL
+* nodec         is NULL
+
+Node of type VALUE
+Returns the value in this node.
+* nodetype      is VALUE
+* operation     is NULL
+* evaluation    is NULL
+* instruction   is NULL
+* identifier    is NULL
+* value         is INTEGER or FLOAT
+* nodea         is NULL
+* nodeb         is NULL
+* nodec         is NULL
 ```
