@@ -26,7 +26,8 @@ flex flex.l && bison -d bison.y && gcc lex.yy.c bison.tab.c symbol_table.c data.
 ./runout file.txt
 ```
 
-## Terminal Nomenclature
+# Grammar Specifics
+## Nomenclature
 These are the names that will be used to refer to the lexicon in both Flex and Bison. Note that the prefix R stands for Reserved Words, S stands for Symbols, and V for Values.
 
 ```
@@ -143,35 +144,36 @@ signo
 ;
 ```
 
+# Bison Specifics
 ## Bison Union
 Bison has to handle the values that each terminal returns inside of an union. The union value can be one of the following.
 ```c
 %union {
-    int code;           // Integer code of the terminal read.
-    char * identifier;  // String of the idenfitier read.
-    data_value value    // Value that can either be integer or float.
+    int code;                   // Integer code of the terminal read.
+    char * identifier;          // String of the idenfitier read.
+    struct data_value value;    // Value that can either be integer or float.
+    struct tree_node * node;    // Node of this expression.
 }
 ```
 
 ## Terminal Types
 Most terminals only return their code number, which is the Bison Union's code attribute, however, the three regular expressions have to return a value, which can be an identifier, or an integer, or a floating point.
 ```c
-%token<code>                    // All reserved terminals.
-%token<identifier> V_ID         // Identifier read as a string.
-%token<NUMERIC> V_NUMINT        // Integer value read stored as a NUMERIC of type int.
+%token<code>                // All reserved terminals.
+%token<identifier> V_ID     // Identifier read as a string.
+%token<value> V_NUMINT      // Integer value read stored as a data_value.
+%token<value> V_NUMFLOAT    // Float value read stored as a data_value.
 ```
 
 ## Non Terminal Types
-In order to place functions regarding strong type checking inside of the Bison grammar, it is important to define the types that the non terminals will return, mainly the ones that inquire the integer or floating point values.
+To aid the simplified tree class in the making of nodes, it is important for the grammar to be able to return sub nodes, or children nodes at will by calling them with Bison's $X operators. This implies that most of the non terminals have to be of type tree_node.
 
-As such, the tipo, expr, term and factor non terminals return a character which defines if the value to strong type check is an integer or a floating point.
+The following are the grammars that have to be of the type node, or tree_node.
 ```c
-%type<numtype> tipo     // Returns the type of the reserved word read.
-%type<numtype> expr     // Returns the type of the term non terminal.
-%type<numtype> term     // Returns the type of the factor non terminal.
-%type<numtype> factor   // Returns the type of the identifier, integer or float read.
+%type<node> stmt_lst stmt expression expr term factor relop signo
 ```
 
+# Symbol Table Specifics
 ## Symbol Table Types
 The Symbol Table used uses a simple hash table, implementing Java's hashCode function (https://docs.oracle.com/javase/7/docs/api/java/lang/String.html#hashCode%28%29). Using the following structure to store the values of the hash item.
 
@@ -206,11 +208,13 @@ typedef struct symbol_table {
 } hash_table;
 ```
 
-## Syntax Tree Types
+# Simplified Tree Specifics
+## Simplified Tree Types
 The Syntax Tree uses three node pointers defining what to use, its type, such as an instruction or a value, and an union value regarding the contents of this node, with the type defining how to use them.
 ```c
 typedef union tree_info {
     int instruction;            // Instruction to execute of this node.
+    char operation;             // Operation to execute when calling this node.
     char * identifier;          // Identifier to read of this node.
     data_value data;            // Data of the item.
 } tree_info;
@@ -218,8 +222,9 @@ typedef union tree_info {
 typedef struct tree_node {
     char nodetype;              // Type of this node, used to handle the data.
     node_value content;         // Content of this node, handled by knowing type.
-    node_data * node_a;       // First child node.
-    node_data * node_b;       // Second child ndoe.
-    node_data * node_c;       // Third child node.
+    node_data * node_a;         // First child node.
+    node_data * node_b;         // Second child node.
+    node_data * node_c;         // Third child node.
+    node_data * llamada_de_emergencia; //Hay un hombre moribundo aquí
 } tree_node;
 ```

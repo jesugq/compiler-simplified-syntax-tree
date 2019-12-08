@@ -30,8 +30,6 @@ void bison_error_data_misassign(char *, data_value *, data_value *);
 
 // Bison Union
 %union {
-    int code;
-    char * identifier;
     struct data_value * value;
 }
 
@@ -47,7 +45,7 @@ void bison_error_data_misassign(char *, data_value *, data_value *);
 %token<value> V_NUMFLOAT
 
 // Bison Non Terminal Types
-%type<value> tipo expr term factor
+%type<value> stmt_lst stmt expression expr term factor relop signo
 
 // Grammar
 %%
