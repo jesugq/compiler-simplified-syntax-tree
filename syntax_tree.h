@@ -44,7 +44,8 @@ typedef struct syntax_node {
     struct syntax_node * nodec;
 } syntax_node;
 
-void syntax_print_node(syntax_node * node);
+void syntax_print_node(syntax_node*);
+bool syntax_check_types(syntax_node*, syntax_node*);
 syntax_node * syntax_initialize();
 syntax_node * syntax_create_node(
     char, char, bool, char, char*, data_value*,

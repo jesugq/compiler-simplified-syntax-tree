@@ -14,8 +14,6 @@ begin
     while (x < 21)
         x <- x + 1
     ;
-    read x
-    ;
     print 500 * 10
     ;
     begin
@@ -23,4 +21,7 @@ begin
         ;
         y <- 5.1
     end
+    ;
+    if (x)
+        x <- 10
 end

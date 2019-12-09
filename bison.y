@@ -139,7 +139,11 @@ stmt
         // Create a node of INSTRUCTION ASSIGN
         $$ = syntax_create_assign(id_node, $3, NULL);
         
-        // TBD: Type check.
+        // Verify that the types are the same.
+        if (!syntax_check_types(id_node, $3)) {
+            bison_error_data_mismatch(id_node->value, $3->value);
+            YYERROR;
+        }
     }
     | R_IF S_PARENTL expression S_PARENTR stmt {
         // Create a node of INSTRUCTION IF
@@ -188,7 +192,11 @@ expression
         // Create a node of INSTRUCTION EXPRESSION
         $$ = syntax_create_expression($2, $1, $3, NULL);
         
-        // TBD: Type check.
+        // Verify that the types are the same.
+        if (!syntax_check_types($1, $3)) {
+            bison_error_data_mismatch($1->value, $3->value);
+            YYERROR;
+        }
     }
 ;
 
@@ -207,9 +215,7 @@ expr
     }
     | signo term {
         // Create a node of INSTRUCTION EXPR
-        $$ = syntax_create_expr($1, $2, NULL, NULL);
-
-        // TBD: Type check.
+        $$ = syntax_create_expr(DATA_NEGATIVE, $2, NULL, NULL);
     }
     | term {
         // Skip creation and go directly to TERM
@@ -222,13 +228,21 @@ term
         // Create a node of INSTRUCTION TERM
         $$ = syntax_create_term(DATA_MULTIPLY, $1, $3, NULL);
 
-        // TBD: Type check.
+        // Verify that the types are the same.
+        if (!syntax_check_types($1, $3)) {
+            bison_error_data_mismatch($1->value, $3->value);
+            YYERROR;
+        }
     }
     | term S_SLASH factor {
         // Create a node of INSTRUCTION TERM
         $$ = syntax_create_term(DATA_DIVIDE, $1, $3, NULL);
 
-        // TBD: Type check.
+        // Verify that the types are the same.
+        if (!syntax_check_types($1, $3)) {
+            bison_error_data_mismatch($1->value, $3->value);
+            YYERROR;
+        }
     }
     | factor {
         // Skip creation and go directly to FACTOR
@@ -379,47 +393,6 @@ void bison_error_data_mismatch(data_value * one, data_value * two) {
     }
     else strcat(error, errn);
 
-    strcat(error, erra);
-
-    if (two->numtype == DATA_INTEGER) {
-        strcat(error, erri);
-        sprintf(hold, "%d", two->number.int_value);
-        strcat(error, hold);
-    }
-    else if (two->numtype == DATA_FLOAT) {
-        strcat(error, errf);
-        sprintf(hold, "%f", two->number.float_value);
-        strcat(error, hold);
-    }
-    else strcat(error, errn);
-
-    yyerror(error);
-}
-
-/**
- * Bison Error Identifier Missing calls the yyerror function with a message of
- * "illegal assignment of one <- two".
- * @param   identifier  Identifier of the first data type.
- * @param   one         First data type.
- * @param   two         Second data type.
- */
-void bison_error_data_misassign(
-    char * identifier, data_value * one, data_value * two
-) {
-    char error[1000] = "illegal assignment of ";
-    char hold[1000];
-    char errc[] = ":";
-    char erra[] = " <- ";
-    char erri[] = "int";
-    char errf[] = "float:";
-    char errn[] = "unknown";
-
-    if (one->numtype == DATA_INTEGER) strcat(error, erri);
-    else if (one->numtype == DATA_FLOAT) strcat(error, errf);
-    else strcat(error, errn);
-
-    strcat(error, errc);
-    strcat(error, identifier);
     strcat(error, erra);
 
     if (two->numtype == DATA_INTEGER) {

@@ -2,11 +2,11 @@ var a: int;
 var b: int;
 var c: int;
 var d: int;
-var e: int
+var e: float
 begin
     a <- 1 + 2;
     b <- 1 - 2;
     c <- ~5;
     d <- 1 * 2;
-    e <- 1 / 2
+    e <- 1.0 / 2.0
 end

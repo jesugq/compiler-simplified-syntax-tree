@@ -79,7 +79,7 @@ bool data_evaluation(data_value * one, data_value * two, char operation) {
  * @param   one     Data of the first element.
  * @return  If the evaluaton is zero.
  */
-bool data_is_zero(data_value * one) {
+bool data_zero(data_value * one) {
     if (one->numtype == DATA_INTEGER)
         return one->number.int_value == 0;
     else if (one->numtype == DATA_FLOAT)
@@ -161,8 +161,8 @@ data_value * data_operation(
  */
 data_value * data_negative(data_value * one) {
     if (one->numtype == DATA_INTEGER)
-        return data_create_integer(one->number.int_value * -1);
+        return data_create_integer(one->number.int_value * (-1));
     else if (one->numtype == DATA_FLOAT)
-        return data_create_float(one->number.float_value * -1);
+        return data_create_float(one->number.float_value * (-1));
     else return data_create_integer(0);
 }

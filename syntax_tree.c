@@ -46,6 +46,7 @@ syntax_node * syntax_initialize() {
     return node;
 }
 
+
 /**
  * Syntax Create Node creates an node of the type specified on nodetype, which
  * will define the content inside of info. Documentation regarding how the
@@ -103,7 +104,9 @@ syntax_node * syntax_create_expression(
     syntax_node * nodec
 ) {
     bool evaluation;
-    evaluation = data_evaluation(nodea->value, nodeb->value, operation);
+    if (operation == DATA_ZERO)
+        evaluation = data_zero(nodea->value);
+    else evaluation = data_evaluation(nodea->value, nodeb->value, operation);
 
     return syntax_create_node(
         SYNTAX_INSTRUCTION,
@@ -134,7 +137,9 @@ syntax_node * syntax_create_expr(
     syntax_node * nodec
 ) {
     data_value * value;
-    value = data_operation(nodea->value, nodeb->value, operation);
+    if (operation == DATA_NEGATIVE)
+        value = data_negative(nodea->value);
+    else value = data_operation(nodea->value, nodeb->value, operation);
 
     return syntax_create_node(
         SYNTAX_INSTRUCTION,
@@ -383,6 +388,18 @@ syntax_node * syntax_create_print(
 }
 
 /**
+ * Syntax Check Types verifies that the nodes have the same type in their
+ * value, for Bison to accurately print where the error was found.
+ * @param   one     First node.
+ * @param   two     Second node.
+ * @return  Whether the two nodes have the same type.
+ */
+bool syntax_check_types(syntax_node * one, syntax_node * two) {
+    if (one == NULL || two == NULL) return false;
+    return one->value->numtype == two->value->numtype;
+}
+
+/**
  * Simple print of the node's current state.
  */
 void syntax_print_node(syntax_node * node) {
@@ -416,13 +433,10 @@ void syntax_execute_nodetype(syntax_node * node) {
             syntax_execute_instruction(node);
             break;
         case SYNTAX_IDENTIFIER:
-            printf("This nodetype is an identifier.\n");
             break;
         case SYNTAX_VALUE:
-            printf("This nodetype is a value.\n");
             break;
         default:
-            printf("This nodetype is corrupted.\n");
             break;
     }
 }
@@ -702,7 +716,7 @@ void syntax_evaluate_expression(syntax_node * node) {
         syntax_execute_nodetype(node->nodea);
 
         // Evaluate to zero.
-        node->evaluation = data_is_zero(node->nodea->value);
+        node->evaluation = !data_zero(node->nodea->value);
     } else {
         // Check if the children nodes are null.
         if (node->nodea == NULL) {
@@ -744,23 +758,23 @@ void syntax_operate_expr(syntax_node * node) {
 
         // Update the value with its negative.
         node->value = data_negative(node->nodea->value);
+    } else {
+        // Check if the children are null.
+        if (node->nodea == NULL) {
+            printf("Expr: The nodea is empty.\n");
+            exit(EXIT_FAILURE);
+        } else if (node->nodeb == NULL) {
+            printf("Expr: The nodeb is empty.\n");
+            exit(EXIT_FAILURE);
+        }
+
+        // Update nodes.
+        syntax_execute_nodetype(node->nodea);
+        syntax_execute_nodetype(node->nodeb);
+
+        // Operate the contents.
+        node->value = data_operation(node->nodea->value, node->nodeb->value, node->operation);
     }
-
-    // Check if the children are null.
-    if (node->nodea == NULL) {
-        printf("Expr: The nodea is empty.\n");
-        exit(EXIT_FAILURE);
-    } else if (node->nodeb == NULL) {
-        printf("Expr: The nodeb is empty.\n");
-        exit(EXIT_FAILURE);
-    }
-
-    // Update nodes.
-    syntax_execute_nodetype(node->nodea);
-    syntax_execute_nodetype(node->nodeb);
-
-    // Operate the contents.
-    node->value = data_operation(node->nodea->value, node->nodeb->value, node->operation);
 }
 
 /**
