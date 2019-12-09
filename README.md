@@ -32,7 +32,7 @@ gcc lex.yy.c bison.tab.c symbol_table.c syntax_tree.c data.c -lfl -lm -o run.out
 ./runout file.txt
 
 # Or the short version
-flex flex.l && bison -d bison.y && gcc lex.yy.c bison.tab.c symbol_table.c syntax_tree.c function_table.c data.c -lfl -lm -o run.out
+flex flex.l && bison -d bison.y && gcc lex.yy.c bison.tab.c symbol_table.c syntax_tree.c function_batch.c data.c -lfl -lm -o run.out
 ./runout file.txt
 ```
 
@@ -268,6 +268,7 @@ typedef struct param_list {
 
 typedef struct function_info {
     int args;                   // Number of arguments of the function.
+    int index;                  // Index position of the function.
     char numtype;               // Type of the function.
     char * identifier;          // Identifier of the function.
     param_list * list;          // Parameter List of the function.

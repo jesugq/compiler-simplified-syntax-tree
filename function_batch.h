@@ -29,6 +29,7 @@ typedef struct param_list {
 } param_list;
 typedef struct function_info {
     int args;
+    int index;
     char numtype;
     char * identifier;
     param_list * list;
@@ -43,12 +44,15 @@ typedef struct function_batch {
 
 function_batch * function_initialize();
 function_info * function_itemize();
+param_list * function_paramize(param_list *, char *, data_value *);
 void function_print(function_batch *);
 
 int function_search(function_batch *, char *);
 bool function_exists(function_batch *, char *);
 bool function_is_full(function_batch *);
-bool function_insert(function_batch *, char *, data_value *, param_list *);
+bool function_insert(function_batch *, char *, data_value *, param_list *, int);
 bool function_assign(function_batch *, char *, data_value *);
-data_value * function_extract(function_batch *, char *);
-param_list * function_observe(function_batch *, char *);
+data_value * function_get_value(function_batch *, char *);
+param_list * function_get_list(function_batch *, char *);
+symbol_table * function_get_table(function_batch *, char *);
+syntax_node * function_get_node(function_batch *, char *);
