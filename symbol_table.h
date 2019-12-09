@@ -22,7 +22,6 @@ typedef struct symbol_item {
 } symbol_item;
 typedef struct symbol_table {
     int size;
-    int level;
     struct symbol_item * items;
 } symbol_table;
 

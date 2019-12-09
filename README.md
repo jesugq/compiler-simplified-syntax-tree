@@ -199,11 +199,10 @@ typedef struct symbol_item {
 } hash_item;
 ```
 
-These nodes are stored in a hash table, which stores the integer for its size, the array of hash items, and an integer denoting the recursion level this table is currently in.
+These nodes are stored in a hash table, which stores the integer for its size, and the array of hash items.
 ```c
 typedef struct symbol_table {
     int size;                   // Size of the table.
-    int level;                  // Stack level of the table.
     hash_item * items;          // Item array of the table.
 } hash_table;
 ```

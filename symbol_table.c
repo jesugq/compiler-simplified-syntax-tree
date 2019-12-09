@@ -18,25 +18,21 @@
 /**
  * Symbol Table stores the array of symbol_items and the size of said array.
  * @param   size    Size of the table.
- * @param   level   Recursion level this table is in.
  * @param   items   Items of the table.    
  */
 // typedef struct symbol_table {
 //     int size;
-//     int level;
 //     struct symbol_item * items;
 // } symbol_table;
 
 /**
  * Symbol Table Initialize returns the allocated symbol table.
- * @param   level   Recursion level this table is in.
  * @return  Initialized symbol table pointer.
  */
-symbol_table * symbol_initialize(int level) {
+symbol_table * symbol_initialize() {
     symbol_table * table;
     table = (symbol_table *)calloc(1, sizeof(symbol_table));
     table->size = 0;
-    table->level = level;
     table->items = symbol_itemize();
     return table;
 }
