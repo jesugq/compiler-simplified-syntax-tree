@@ -10,22 +10,40 @@
 #include "data.h"
 #endif
 
+#ifndef _SYNTAXH_
+#define _SYNTAXH_
+#include "syntax_tree.h"
+#endif
+
 // Definitions
-#define SYMBOL_SIZE         20
+#define SYMBOL_SIZE         30
 #define SYMBOL_NOT_FOUND    -1
+#define SYMBOL_EMPTY        'E'
+#define SYMBOL_IDENTIFIER   'I'
+#define SYMBOL_FUNCTION     'F'
 
 // Declarations
+typedef struct param_list {
+    char * identifier;
+    data_value * value;
+    struct param_list * next;
+} param_list;
 typedef struct symbol_item {
     int key;
+    char symtype;
     char * identifier;
     struct data_value * value;
+    struct param_list * list;
+    struct syntax_node * node;
+    struct symbol_table * table;
 } symbol_item;
 typedef struct symbol_table {
     int size;
+    char symtype;
     struct symbol_item * items;
 } symbol_table;
 
-symbol_table * symbol_initialize(int);
+symbol_table * symbol_initialize();
 symbol_item * symbol_itemize();
 void symbol_print(symbol_table *);
 int symbol_hash_key(char *);
@@ -34,10 +52,13 @@ int symbol_hash_index(int);
 int symbol_search(symbol_table *, char *);
 bool symbol_exists(symbol_table *, char *);
 bool symbol_is_full(symbol_table *);
-bool symbol_insert(symbol_table *, char *, data_value *);
+bool symbol_insert_identifier(symbol_table *, char *, data_value *);
+bool symbol_insert_function(
+    symbol_table *, char *, data_value *,
+    param_list *, syntax_node *, symbol_table *
+);
 bool symbol_assign(symbol_table *, char *, data_value *);
-data_value * symbol_extract(symbol_table *, char *);
-
-int symbol_get_key(symbol_table *, int);
-char * symbol_get_identifier(symbol_table *, int);
-data_value * symbol_get_data(symbol_table *, int);
+data_value * symbol_get_value(symbol_table *, char *);
+param_list * symbol_get_list(symbol_table *, char *);
+symbol_table * symbol_get_table(symbol_table *, char *);
+syntax_node * symbol_get_node(symbol_table *, char *);

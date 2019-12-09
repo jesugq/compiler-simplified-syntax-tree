@@ -1,18 +1,37 @@
 #include "symbol_table.h"
 
 /**
+ * Param List has the amount of parameters and the contents of them when the
+ * symbol item is of type function. Using this we can observe if calling a
+ * function was correct.
+ */
+// typedef struct param_list {
+//     char * identifier;
+//     data_value * value;
+//     struct param_list * next;
+// } param_list;
+
+/**
  * Symbols Item is each instance of a possible symbol item. It includes its hash
  * key, the identifier string, its numtype and the data_value union, which can 
  * be accessed depending on the numtype.
  * @param   key         Hash key of this node.
+ * @param   symtype     Type of this node.
  * @param   identifier  String identifier of this node.
  * @param   numtype     Numerical type of this node.
  * @param   value       Union value of this node.
+ * @param   list        List of this node.
+ * @param   node        Node of this node.
+ * @param   table       Table of this node.
  */
 // typedef struct symbol_item {
 //     int key;
+//     char symtype;
 //     char * identifier;
 //     struct data_value * value;
+//     struct param_list * list;
+//     struct syntax_node * node;
+//     struct symbol_table * table;
 // } symbol_item;
 
 /**
@@ -45,6 +64,9 @@ symbol_item * symbol_itemize() {
     symbol_item * items;
     items = (symbol_item *)calloc(
         SYMBOL_SIZE, sizeof(symbol_item));
+    int i;
+    for (i=0; i<SYMBOL_SIZE; i++)
+        items[i].symtype = SYMBOL_EMPTY;
     return items;
 }
 
@@ -166,7 +188,7 @@ bool symbol_is_full(symbol_table * table) {
  * @param   value       Value of the identifier.
  * @return  True if the insertion was successful.
  */
-bool symbol_insert(
+bool symbol_insert_identifier(
     symbol_table * table, char * identifier, data_value * value
 ) {
     if (symbol_is_full(table)) return false;
@@ -183,8 +205,50 @@ bool symbol_insert(
 
     symbol_item item;
     item.key = key;
+    item.symtype = SYMBOL_IDENTIFIER;
     item.identifier = identifier;
     item.value = value;
+    item.list = NULL;
+    item.node = NULL;
+    item.table = NULL;
+    table->items[curr] = item;
+    return true;
+}
+
+/**
+ * Symbol Table Insert creates an item node and places it depending on its key.
+ * @param   table       Symbol table.
+ * @param   identifier  String of the identifier.
+ * @param   value       Value of the identifier.
+ * @param   list        List of the identifier.
+ * @param   node        Node of the identifier.
+ * @param   tablein     Table inside of the identifier.
+ * @return  True if the insertion was successful.
+ */
+bool symbol_insert_function(
+    symbol_table * table, char * identifier, data_value * value,
+    param_list * list, syntax_node * node, symbol_table * tablein
+) {
+    if (symbol_is_full(table)) return false;
+    
+    int key = symbol_hash_key(identifier);
+    int index = symbol_hash_index(key);
+    int curr = index;
+
+    while (table->items[curr].key != 0) {
+        curr ++;
+        if (curr >= SYMBOL_SIZE) curr = 0;
+        if (curr == index) return false;
+    }
+
+    symbol_item item;
+    item.key = key;
+    item.symtype = SYMBOL_IDENTIFIER;
+    item.identifier = identifier;
+    item.value = value;
+    item.list = list;
+    item.node = node;
+    item.table = tablein;
     table->items[curr] = item;
     return true;
 }
@@ -210,55 +274,49 @@ bool symbol_assign(
 }
 
 /**
- * Symbol Table Extract is similar to the get value function in which it returns
- * the data_value object, but using the identifier instead of the index.
- * @param   table       Symbol table.
- * @param   identifier  Identifier of the symbol.
- * @return  Data value object of the identifier.
+ * Function Get Value gets the data_value from the Function.
+ * @param   table       Function table.
+ * @param   identifier  Identifier to search for.
+ * @return  The value inside of the function.
  */
-data_value * symbol_extract(symbol_table * table, char * identifier) {
-    int index = symbol_search(table, identifier);
-    if (index == SYMBOL_NOT_FOUND)
-        return data_create_integer(0);
-    else
-        return table->items[index].value;
+data_value * symbol_get_value(symbol_table * table, char * identifier) {
+    int i = symbol_search(table, identifier);
+    if (i == SYMBOL_NOT_FOUND) return data_create_integer(0);
+    return table->items[i].value;
 }
 
 /**
- * Retrieves the key of the symbol table item at parameter index.
- * @param   table   Symbol table.
- * @param   index   Index of the symbol item.
- * @return  Key of the symbol item.
+ * Function Get List gets the param_list from the Function.
+ * @param   table       Function table.
+ * @param   identifier  Identifier to search for.
+ * @return  The list inside of the function.
  */
-int symbol_get_key(symbol_table * table, int index) {
-    if (index == SYMBOL_NOT_FOUND)
-        return 0;
-    else
-        return table->items[index].key;
+param_list * function_observe(symbol_table * table, char * identifier) {
+    int i = symbol_search(table, identifier);
+    if (i == SYMBOL_NOT_FOUND) return NULL;
+    return table->items[i].list;
 }
 
 /**
- * Retrieves the identifier of the symbol table item at parameter index.
- * @param   table       Symbol table.
- * @param   index   Index of the symbol item.
- * @return  Identifier of the symbol item.
+ * Function Get Table gets the symbol_table from the function.
+ * @param   table       Function table.
+ * @param   identifier  Identifier to search for.
+ * @return  The table inside of the function.
  */
-char * symbol_get_identifier(symbol_table * table, int index) {
-    if (index == SYMBOL_NOT_FOUND)
-        return NULL;
-    else
-        return table->items[index].identifier;
+symbol_table * symbol_get_table(symbol_table * table, char * identifier) {
+    int i = symbol_search(table, identifier);
+    if (i == SYMBOL_NOT_FOUND) return symbol_initialize();
+    return table->items[i].table;
 }
 
 /**
- * Retrieves the value of the symbol table item at parameter index.
- * @param   table   Symbol table.
- * @param   index   Index of the symbol item.
- * @return  Value of the symbol item.
+ * Function Get Node gets the syntax_node from the function.
+ * @param   table       Function table.
+ * @param   identifier  Identifier to search for.
+ * @return  The node inside of the function.
  */
-data_value * symbol_get_data(symbol_table * table, int index) {
-    if (index == SYMBOL_NOT_FOUND)
-        return data_create_integer(0);
-    else
-        return table->items[index].value;
+syntax_node * symbol_get_node(symbol_table * table, char * identifier) {
+    int i = symbol_search(table, identifier);
+    if (i == SYMBOL_NOT_FOUND) return syntax_initialize();
+    return table->items[i].node;
 }

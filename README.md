@@ -193,9 +193,13 @@ typedef struct data_value {
 Each node in the hash table has a hash key, the identifier name, its numeric type, and the value in an union of either an integer or a float, with numtype defines which to use in operations.
 ```c
 typedef struct symbol_item {
-    int key;
+    int key;                    // Key of the item.
+    char symtype;               // Type of the item, function or identifier.
     char * identifier;          // Name of the item.
     data_value data;            // Data of the item.
+    param_list * list;          // Parameter List if the symbol is a function.
+    syntax_node * node;         // Syntax node if the symbol is a function.
+    symbol_table * table;       // Symbol table if the symbol is a function.
 } hash_item;
 ```
 

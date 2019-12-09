@@ -2,12 +2,20 @@
 // Imports
 #include <stdio.h>
 #include <stdbool.h>
-#include "symbol_table.h"
-#include "syntax_tree.h"
 
 #ifndef _DATAH_
 #define _DATAH_
 #include "data.h"
+#endif
+
+#ifndef _SYMBOLH_
+#define _SYMBOLH_
+#include "symbol_table.h"
+#endif
+
+#ifndef _SYNTAXH_
+#define _SYNTAXH_
+#include "syntax_tree.h"
 #endif
 
 // Global Table
@@ -37,6 +45,7 @@ void bison_error_data_misassign(char *, data_value *, data_value *);
     char * identifier;
     struct data_value * value;
     struct syntax_node * node;
+    struct symbol_table * table;
 }
 
 // Bison Terminal Types
@@ -54,24 +63,39 @@ void bison_error_data_misassign(char *, data_value *, data_value *);
 %type<operation> relop signo
 %type<value> tipo
 %type<node> opt_stmts stmt_lst stmt expression expr term factor
+%type<table> opt_decls decls dec
 
 // Grammar
 %%
 prog
     : opt_decls R_BEGIN opt_stmts R_END {
+        table = $1;
+
         // The parent node is the result of all the statements.
         node = $3;
     }
 ;
 
 opt_decls
-    : decls
-    | %empty
+    : decls {
+        // Directly return the table.
+        $$ = $1;
+    }
+    | %empty {
+        // Generate an empty table.
+        $$ = symbol_initialize();
+    }
 ;
 
 decls
-    : dec S_SEMICOLON decls
-    | dec
+    : dec S_SEMICOLON decls {
+        // Directly return the table.
+        $$ = $3;
+    }
+    | dec {
+        // Directly return the table.
+        $$ = $1;
+    }
 ;
 
 dec
@@ -83,10 +107,13 @@ dec
         }
 
         // Verify that the identifier was inserted.
-        if (!symbol_insert(table, $2, $4)) {
+        if (!symbol_insert_identifier(table, $2, $4)) {
             bison_error_identifier_failed($2);
             YYERROR;
         }
+
+        // Return the table.
+        $$ = table;
     }
 ;
 
@@ -133,7 +160,7 @@ stmt
         // Create a node using an identifier.
         syntax_node * id_node;
         char * identifier = $1;
-        data_value * value = symbol_extract(table, identifier);
+        data_value * value = symbol_get_value(table, identifier);
         id_node = syntax_create_value(SYNTAX_IDENTIFIER, identifier, value);
 
         // Create a node of INSTRUCTION ASSIGN
@@ -167,7 +194,7 @@ stmt
         // Create a node using an identifier.
         syntax_node * id_node; 
         char * identifier = $2;
-        data_value * value = symbol_extract(table, identifier);
+        data_value * value = symbol_get_value(table, identifier);
         id_node = syntax_create_value(SYNTAX_IDENTIFIER, identifier, value);
 
         // Create a node of INSTRUCTION READ
@@ -265,7 +292,7 @@ factor
         // Create a node using an identifier.
         syntax_node * id_node;
         char * identifier = $1;
-        data_value * value = symbol_extract(table, identifier);
+        data_value * value = symbol_get_value(table, identifier);
         id_node = syntax_create_value(SYNTAX_IDENTIFIER, identifier, value);
 
         // Return the newly created node.
@@ -428,7 +455,7 @@ int main(int argc, char * argv[]) {
     }
 
     // Flex and Bison parsing.
-    table = symbol_initialize(0);
+    table = symbol_initialize();
     node = syntax_initialize();
     yyparse();
     syntax_execute_nodetype(node);
