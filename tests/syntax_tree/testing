@@ -16,6 +16,8 @@ begin
     ;
     print 500 * 10
     ;
+    read x
+    ;
     begin
         x <- 1
         ;
@@ -23,5 +25,5 @@ begin
     end
     ;
     if (x)
-        x <- 10
+        x <- 20
 end

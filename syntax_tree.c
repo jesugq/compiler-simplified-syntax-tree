@@ -404,7 +404,7 @@ bool syntax_check_types(syntax_node * one, syntax_node * two) {
  */
 void syntax_print_node(syntax_node * node) {
     if (node == NULL) {
-        printf("This node is null. Like your love for me\n");
+        printf("This node is null.\n");
         return;
     }
     printf("\nNODE STATUS\n");
@@ -424,7 +424,7 @@ void syntax_print_node(syntax_node * node) {
  */
 void syntax_execute_nodetype(syntax_node * node) {
     // Check if the node is null.
-    syntax_print_node(node);
+    // syntax_print_node(node);
     if (node == NULL) return;
 
     // Decide what to do depending on the type of node.
@@ -482,7 +482,6 @@ void syntax_execute_instruction(syntax_node * node) {
         case SYNTAX_TERM:
             syntax_operate_term(node);
         default:
-            printf("This instruction is corrupted. Like your heart\n");
             break;
     }
 }
@@ -651,12 +650,12 @@ void syntax_execute_read(syntax_node * node) {
     // Decide how to scan.
     if (numtype == DATA_INTEGER) {
         int input;
-        printf("Enter an integer for the identifier %s : ", nodea_identifier);
+        printf("\nEnter an integer for the identifier %s : ", nodea_identifier);
         scanf("%d", &input);
         nodea_value->number.int_value = input;
     } else if (numtype == DATA_FLOAT) {
         float input;
-        printf("Enter a float for the identifier %s :", nodea_identifier);
+        printf("\nEnter a float for the identifier %s :", nodea_identifier);
         scanf("%f", &input);
         nodea_value->number.float_value = input;
     } else {
@@ -676,7 +675,7 @@ void syntax_execute_print(syntax_node * node) {
 
     // Check if the children nodes are null.
     if (node->nodea == NULL) {
-        printf("Read: The nodea is empty.\n");
+        printf("Print: The nodea is empty.\n");
         exit(EXIT_FAILURE);
     }
 
@@ -686,9 +685,9 @@ void syntax_execute_print(syntax_node * node) {
 
     // Decide how to scan.
     if (numtype == DATA_INTEGER)
-        printf("The value is %d\n", nodea_value->number.int_value);
+        printf("\nThe value is %d\n", nodea_value->number.int_value);
     else if (numtype == DATA_FLOAT)
-        printf("The value is %f\n", nodea_value->number.float_value);
+        printf("\nThe value is %f\n", nodea_value->number.float_value);
     else {
         printf("Print: The nodea is of type unknown.\n");
         exit(EXIT_FAILURE);

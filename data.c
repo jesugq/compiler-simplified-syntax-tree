@@ -47,10 +47,6 @@ bool data_evaluation(data_value * one, data_value * two, char operation) {
         int input_one = one->number.int_value;
         int input_two = two->number.int_value;
 
-        printf("One is %d\n", input_one);
-        printf("Two is %d\n", input_two);
-        printf("Operation is %c\n", operation);
-
         switch (operation) {
             case DATA_LESS:     return input_one < input_two;
             case DATA_GREATER:  return input_one > input_two;
