@@ -1,4 +1,5 @@
 // Imports
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 
@@ -31,6 +32,8 @@ typedef struct data_value {
 
 bool data_numtype_match(data_value*, data_value*);
 bool data_evaluation(data_value*, data_value*, char);
+bool data_is_zero(data_value*);
 data_value * data_create_integer(int);
 data_value * data_create_float(float);
 data_value * data_operation(data_value*, data_value*, char);
+data_value * data_negative(data_value*);

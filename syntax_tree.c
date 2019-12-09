@@ -383,11 +383,31 @@ syntax_node * syntax_create_print(
 }
 
 /**
+ * Simple print of the node's current state.
+ */
+void syntax_print_node(syntax_node * node) {
+    if (node == NULL) {
+        printf("This node is null. Like your love for me\n");
+        return;
+    }
+    printf("\nNODE STATUS\n");
+    printf("nodetype = %c\n", node->nodetype);
+    printf("operation = %c\n", node->operation);
+    printf("evaluation = %d\n", node->evaluation);
+    printf("instruction = %c\n", node->instruction);
+    if (node->value != NULL) printf("value = %c\n", node->value->numtype);
+    if (node->nodea != NULL) printf("nodea = %c\n", node->nodea->nodetype);
+    if (node->nodeb != NULL) printf("nodeb = %c\n", node->nodeb->nodetype);
+    if (node->nodec != NULL) printf("nodec = %c\n", node->nodec->nodetype);
+}
+
+/**
  * Interpretation of the Node. It decides what to do depending on the nodetype.
  * @param   node    Node to run.
  */
 void syntax_execute_nodetype(syntax_node * node) {
     // Check if the node is null.
+    syntax_print_node(node);
     if (node == NULL) return;
 
     // Decide what to do depending on the type of node.
@@ -396,8 +416,10 @@ void syntax_execute_nodetype(syntax_node * node) {
             syntax_execute_instruction(node);
             break;
         case SYNTAX_IDENTIFIER:
+            printf("This nodetype is an identifier.\n");
             break;
         case SYNTAX_VALUE:
+            printf("This nodetype is a value.\n");
             break;
         default:
             printf("This nodetype is corrupted.\n");
@@ -432,7 +454,7 @@ void syntax_execute_instruction(syntax_node * node) {
             syntax_execute_while(node);
             break;
         case SYNTAX_READ:
-            syntax_execute_while(node);
+            syntax_execute_read(node);
             break;
         case SYNTAX_PRINT:
             syntax_execute_print(node);
@@ -446,7 +468,7 @@ void syntax_execute_instruction(syntax_node * node) {
         case SYNTAX_TERM:
             syntax_operate_term(node);
         default:
-            printf("This instruction is corrupted.\n");
+            printf("This instruction is corrupted. Like your heart\n");
             break;
     }
 }
@@ -523,11 +545,10 @@ void syntax_execute_if(syntax_node * node) {
     syntax_execute_nodetype(node->nodea);
 
     // Get the evaluation of the node.
-    bool evaluation = node->nodea->evaluation;
+    node->evaluation = node->nodea->evaluation;
 
     // Execute nodeb is the evaluation was true.
-    if (evaluation)
-        syntax_execute_nodetype(node->nodeb);
+    if (node->evaluation) syntax_execute_nodetype(node->nodeb);
 }
 
 /**
@@ -558,10 +579,8 @@ void syntax_execute_ifelse(syntax_node * node) {
     bool evaluation = node->nodea->evaluation;
 
     // Execute nodeb is the evaluation was true. nodec otherwise
-    if (evaluation)
-        syntax_execute_nodetype(node->nodeb);
-    else
-        syntax_execute_nodetype(node->nodec);
+    if (evaluation) syntax_execute_nodetype(node->nodeb);
+    else syntax_execute_nodetype(node->nodec);
 }
 
 /**
@@ -653,9 +672,9 @@ void syntax_execute_print(syntax_node * node) {
 
     // Decide how to scan.
     if (numtype == DATA_INTEGER)
-        printf("The value is %d : ", nodea_value->number.int_value);
+        printf("The value is %d\n", nodea_value->number.int_value);
     else if (numtype == DATA_FLOAT)
-        printf("The value is %f :", nodea_value->number.float_value);
+        printf("The value is %f\n", nodea_value->number.float_value);
     else {
         printf("Print: The nodea is of type unknown.\n");
         exit(EXIT_FAILURE);
@@ -679,20 +698,27 @@ void syntax_evaluate_expression(syntax_node * node) {
             exit(EXIT_FAILURE);
         }
 
+        // Update nodes.
+        syntax_execute_nodetype(node->nodea);
+
         // Evaluate to zero.
-        node->evaluation = data_evaluation(node->nodea->value, node->nodeb->value, DATA_ZERO);
+        node->evaluation = data_is_zero(node->nodea->value);
     } else {
         // Check if the children nodes are null.
         if (node->nodea == NULL) {
             printf("Expression: The nodea is empty.\n");
             exit(EXIT_FAILURE);
-        } else if (node->nodeb = NULL) {
+        } else if (node->nodeb == NULL) {
             printf("Expression: The nodeb is empty.\n");
             exit(EXIT_FAILURE);
         }
 
+        // Update nodes.
+        syntax_execute_nodetype(node->nodea);
+        syntax_execute_nodetype(node->nodeb);
+
         // Evaluate to whichever found.
-        node->evaluation = data_evaluation(node->nodea->value, node->nodeb->value, node->evaluation);
+        node->evaluation = data_evaluation(node->nodea->value, node->nodeb->value, node->operation);
     }
 }
 
@@ -705,6 +731,21 @@ void syntax_operate_expr(syntax_node * node) {
     // Check if the node is full.
     if (node == NULL) return;
 
+    // Decide what to do depending on the operation.
+    if (node->operation == DATA_NEGATIVE) {
+        // Check if the children nodes are null.
+        if (node->nodea == NULL) {
+            printf("Expr: The nodea is empty.\n");
+            exit(EXIT_FAILURE);
+        }
+
+        // Update nodes.
+        syntax_execute_nodetype(node->nodea);
+
+        // Update the value with its negative.
+        node->value = data_negative(node->nodea->value);
+    }
+
     // Check if the children are null.
     if (node->nodea == NULL) {
         printf("Expr: The nodea is empty.\n");
@@ -713,6 +754,10 @@ void syntax_operate_expr(syntax_node * node) {
         printf("Expr: The nodeb is empty.\n");
         exit(EXIT_FAILURE);
     }
+
+    // Update nodes.
+    syntax_execute_nodetype(node->nodea);
+    syntax_execute_nodetype(node->nodeb);
 
     // Operate the contents.
     node->value = data_operation(node->nodea->value, node->nodeb->value, node->operation);
@@ -735,6 +780,10 @@ void syntax_operate_term(syntax_node * node) {
         printf("Term: The nodeb is empty.\n");
         exit(EXIT_FAILURE);
     }
+
+    // Update nodes.
+    syntax_execute_nodetype(node->nodea);
+    syntax_execute_nodetype(node->nodeb);
 
     // Operate the contents.
     node->value = data_operation(node->nodea->value, node->nodeb->value, node->operation);

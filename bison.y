@@ -187,7 +187,7 @@ expression
     | expr relop expr {
         // Create a node of INSTRUCTION EXPRESSION
         $$ = syntax_create_expression($2, $1, $3, NULL);
-
+        
         // TBD: Type check.
     }
 ;
@@ -260,7 +260,7 @@ factor
     | V_NUMINT{
         // Create a node using a value.
         syntax_node * int_node;
-        data_value * value = data_create_integer(0);
+        data_value * value = $1;
         int_node = syntax_create_value(SYNTAX_VALUE, NULL, value);
 
         // Return the newly created node.
@@ -269,7 +269,7 @@ factor
     | V_NUMFLOAT{
         // Create a node using a value.
         syntax_node * float_node;
-        data_value * value = data_create_float(0.0);
+        data_value * value = $1;
         float_node = syntax_create_value(SYNTAX_VALUE, NULL, value);
 
         // Return the newly created node.
@@ -458,8 +458,8 @@ int main(int argc, char * argv[]) {
     table = symbol_initialize(0);
     node = syntax_initialize();
     yyparse();
-    symbol_print(table);
     syntax_execute_nodetype(node);
+    symbol_print(table);
 
     // Closure of file and system.
     if (yyin != NULL) fclose(yyin);
