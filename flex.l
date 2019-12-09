@@ -31,9 +31,12 @@ DOT     [.]
 "while"     { return flex_left_value_instruction(R_WHILE); }
 "read"      { return flex_left_value_instruction(R_READ); }
 "print"     { return flex_left_value_instruction(R_PRINT); }
+"return"    { return flex_left_value_instruction(R_RETURN); }
+"fun"       { return flex_left_value_instruction(R_FUN); }
 
 ";"     { return flex_left_value_instruction(S_SEMICOLON); }
 ":"     { return flex_left_value_instruction(S_COLON); }
+","     { return flex_left_value_instruction(S_COMMA); }
 "<-"    { return flex_left_value_instruction(S_ASSIGN); }
 "+"     { return flex_left_value_instruction(S_PLUS); }
 "-"     { return flex_left_value_instruction(S_MINUS); }

@@ -13,6 +13,7 @@
 #define SYNTAX_INSTRUCTION  '0'
 #define SYNTAX_IDENTIFIER   '1'
 #define SYNTAX_VALUE        '2'
+#define SYNTAX_FUNCTION     '3'
 
 // NULL Types
 #define SYNTAX_NULLV        NULL

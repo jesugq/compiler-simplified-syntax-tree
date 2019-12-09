@@ -6,6 +6,8 @@ Jesús Antonio González Quevedo - A00399890
 Alberto Oliart Ros - Professor for Compiler Design
 
 ## Assignment Instructions
+**Assignment 6**
+
 The purpose of this assignment is to build an interpreter for the grammar given below using flex and bison. The input to the interpreter is a text file, whose name has to be given as a part of the command line in the console.
 
 The interpreter, through the parser, must build an internal representation of the program given in the text file in the form of a simplified syntax tree, if there are no syntax errors. The parser, while constructing the simplified syntax tree, must do strong type checking and build a symbol table, which will be used during the interpretation process. If the parser finds a syntax error, it must report it and terminate the process.
@@ -13,6 +15,14 @@ The interpreter, through the parser, must build an internal representation of th
 Variables must be declared before use exactly once. If a variable is used and not declared, an error must be reported. Type mismatches must be reported as errors. The interpreter must do the interpretation by traversing the intermediate representation of the program.
 
 Identifiers and numbers have to be recognized via flex using a standard definition, including negative numbers.
+
+**Assignment 7**
+
+The purpose of this assignment is to build an interpreter for the grammar given below using flex and bison.
+
+The input to the interpreter is a text file, whose name has to be given as a part of the command line in the console.
+
+This grammar is an extension of the one in the previous assignment. It contains the declaration and definition of functions and function calls. The details of how to handle function calls was covered in class.
 
 ## Assignment Compilation
 ```bash
@@ -22,7 +32,7 @@ gcc lex.yy.c bison.tab.c symbol_table.c syntax_tree.c data.c -lfl -lm -o run.out
 ./runout file.txt
 
 # Or the short version
-flex flex.l && bison -d bison.y && gcc lex.yy.c bison.tab.c symbol_table.c syntax_tree.c data.c -lfl -lm -o run.out
+flex flex.l && bison -d bison.y && gcc lex.yy.c bison.tab.c symbol_table.c syntax_tree.c function_table.c data.c -lfl -lm -o run.out
 ./runout file.txt
 ```
 
@@ -32,38 +42,39 @@ These are the names that will be used to refer to the lexicon in both Flex and B
 ```
 begin   R_BEGIN
 end     R_END
-;       S_SEMICOLON
 var     R_VAR
-id      V_ID
-:       S_COLON
 int     R_INT
 float   R_FLOAT
 if      R_IF
-<-      S_ASSIGN
 ifelse  R_IFELSE
 while   R_WHILE
 read    R_READ
 print   R_PRINT
+return  R_RETURN
+;       S_SEMICOLON
+:       S_COLON
+<-      S_ASSIGN
 +       S_PLUS
 -       S_MINUS
 *       S_ASTERISK
 /       S_SLASH
 (       S_PARENTL
 )       S_PARENTR
-numint  V_NUMINT
-numflt  V_NUMFLOAT
 <       S_LESS
 >       S_GREATER
 =       S_EQUALS
 <=      S_LTE
 >=      S_GTE
 ~       S_NEGATIVE
+id      V_ID
+numint  V_NUMINT
+numflt  V_NUMFLOAT
 ```
 
 ## Assignment Grammar
 ```
 prog
-    : opt_decls R_BEGIN opt_stmts R_END
+    : opt_decls opt_fun_decls R_BEGIN opt_stmts R_END
 ;
 
 opt_decls
@@ -85,8 +96,32 @@ tipo
     | R_FLOAT
 ;
 
+opt_fun_decls
+    : fun_decls
+    | %empty
+;
+
+fun_decls
+    : fun_dec S_SEMICOLON fun_decls
+    | fun_dec
+;
+
+fun_dec
+    : R_FUN V_ID S_PARENTL opt_params S_PARENTR S_COLON tipo
+    opt_decls R_BEGIN opt_stmts R_END
+;
+
+opt_params
+    : param_lst
+    | %empty
+;
+
+param
+    : V_ID S_COLON tipo
+;
+
 opt_stmts
-    : stmt_lst
+    : stmt_lstvalues
     | %empty
 ;
 
@@ -103,6 +138,7 @@ stmt
     | R_READ V_ID
     | R_PRINT expr
     | R_BEGIN opt_stmts R_END
+    | R_RETURN expr
 ;
 
 expression
@@ -128,6 +164,17 @@ factor
     | V_ID
     | V_NUMINT
     | V_NUMFLOAT
+    | V_ID S_PARENTL opt_args S_PARENTR
+;
+
+opt_args
+    : arg_lst
+    | %empty
+;
+
+arg_lst
+    : expr S_COMMA arg_lst
+    | expr
 ;
 
 relop
@@ -152,7 +199,7 @@ Bison has to handle the values that each terminal returns inside of an union. Th
     int instruction;            // Integer instruction of the terminal read.
     char * identifier;          // String of the idenfitier read.
     struct data_value value;    // Value that can either be integer or float.
-    struct tree_node * node;    // Node of this expression.
+    struct syntax_node * node;  // Node of this expression.
 }
 ```
 
@@ -203,9 +250,39 @@ These nodes are stored in a hash table, which stores the integer for its size, t
 ```c
 typedef struct symbol_table {
     int size;                   // Size of the table.
-    int level;                  // Stack level of the table.
     hash_item * items;          // Item array of the table.
 } hash_table;
+```
+
+# Function Table Specifics
+## Table Types
+The Function Table uses a normal one by one searching method for simplicity. Unlike the Symbol Table, the Function Table has a few more items inside of it that may as well be structures in itself, such as the parameters list, a nested symbol table and a nested syntax node.
+
+The following are the types used for each function, which consists of knowing the amount of arguments and which were used, a standalone table of symbols and a standalone syntax tree node. The param list is an structure in itself that only navigates all parameters.
+```c
+typedef struct param_list {
+    char * identifier;          // Identifier of this parameter.
+    data_value * value;         // Value of this parameter.
+    param_list * next;          // Next argument of this list.
+} param_list;
+
+typedef struct function_info {
+    int args;                   // Number of arguments of the function.
+    char numtype;               // Type of the function.
+    char * identifier;          // Identifier of the function.
+    param_list * list;          // Parameter List of the function.
+    data_value * value;         // Value of the function.
+    syntax_node * node;         // Head Syntax Node of the function.
+    symbol_table * table;       // Symbol Table of the function.
+} function_infO;
+```
+
+All of these items are held nicely in a function batch, the equivalent of a symbol table for functions.
+```c
+typedef struct function_batch {
+    int size;                   // Size of the function table.
+    function_info * info;       // Info array of the table.
+} function_batch;
 ```
 
 # Syntax Tree Specifics
@@ -217,7 +294,7 @@ typedef struct syntax_node {
     char operation;         // Operation of this node.
     bool evaluation;        // Evaluation of the node.
     char instruction;       // Instruction of this node.
-    char * identifier;      // Identifier of the node
+    char * identifier;      // Identifier of the node.
     data_value * value;     // Value of the node.
     syntax_node * nodea;    // First child node.
     syntax_node * nodeb;    // Second child node.

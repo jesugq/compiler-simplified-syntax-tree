@@ -18,25 +18,21 @@
 /**
  * Symbol Table stores the array of symbol_items and the size of said array.
  * @param   size    Size of the table.
- * @param   level   Recursion level this table is in.
  * @param   items   Items of the table.    
  */
 // typedef struct symbol_table {
 //     int size;
-//     int level;
 //     struct symbol_item * items;
 // } symbol_table;
 
 /**
  * Symbol Table Initialize returns the allocated symbol table.
- * @param   level   Recursion level this table is in.
  * @return  Initialized symbol table pointer.
  */
-symbol_table * symbol_initialize(int level) {
+symbol_table * symbol_initialize() {
     symbol_table * table;
     table = (symbol_table *)calloc(1, sizeof(symbol_table));
     table->size = 0;
-    table->level = level;
     table->items = symbol_itemize();
     return table;
 }
@@ -47,8 +43,7 @@ symbol_table * symbol_initialize(int level) {
  */
 symbol_item * symbol_itemize() {
     symbol_item * items;
-    items = (symbol_item *)calloc(
-        SYMBOL_SIZE, sizeof(symbol_item));
+    items = (symbol_item *)calloc(SYMBOL_SIZE, sizeof(symbol_item));
     return items;
 }
 
@@ -70,7 +65,7 @@ void symbol_print(symbol_table * table) {
     printf("\n");
     printf("Symbol Table:\n");
     printf("%4s%10s%10s%10s%10s", headerp, headerk, headeri, headert, headerv);
-    printf("\n\n");
+    printf("\n");
     
     for (i=0; i<SYMBOL_SIZE; i++) {
         if (table->items[i].value != NULL) {
@@ -222,45 +217,6 @@ bool symbol_assign(
  */
 data_value * symbol_extract(symbol_table * table, char * identifier) {
     int index = symbol_search(table, identifier);
-    if (index == SYMBOL_NOT_FOUND)
-        return data_create_integer(0);
-    else
-        return table->items[index].value;
-}
-
-/**
- * Retrieves the key of the symbol table item at parameter index.
- * @param   table   Symbol table.
- * @param   index   Index of the symbol item.
- * @return  Key of the symbol item.
- */
-int symbol_get_key(symbol_table * table, int index) {
-    if (index == SYMBOL_NOT_FOUND)
-        return 0;
-    else
-        return table->items[index].key;
-}
-
-/**
- * Retrieves the identifier of the symbol table item at parameter index.
- * @param   table       Symbol table.
- * @param   index   Index of the symbol item.
- * @return  Identifier of the symbol item.
- */
-char * symbol_get_identifier(symbol_table * table, int index) {
-    if (index == SYMBOL_NOT_FOUND)
-        return NULL;
-    else
-        return table->items[index].identifier;
-}
-
-/**
- * Retrieves the value of the symbol table item at parameter index.
- * @param   table   Symbol table.
- * @param   index   Index of the symbol item.
- * @return  Value of the symbol item.
- */
-data_value * symbol_get_data(symbol_table * table, int index) {
     if (index == SYMBOL_NOT_FOUND)
         return data_create_integer(0);
     else

@@ -2,12 +2,21 @@
 // Imports
 #include <stdio.h>
 #include <stdbool.h>
-#include "symbol_table.h"
-#include "syntax_tree.h"
+#include "function_batch.h"
 
 #ifndef _DATAH_
 #define _DATAH_
 #include "data.h"
+#endif
+
+#ifndef _SYMBOLH_
+#define _SYMBOLH_
+#include "symbol_table.h"
+#endif
+
+#ifndef _SYNTAXH_
+#define _SYNTAXH_
+#include "syntax_tree.h"
 #endif
 
 // Global Table
@@ -27,7 +36,6 @@ void bison_error_identifier_repeated(char *);
 void bison_error_identifier_failed(char *);
 void bison_error_identifier_missing(char *);
 void bison_error_data_mismatch(data_value *, data_value *);
-void bison_error_data_misassign(char *, data_value *, data_value *);
 %}
 
 // Bison Union
@@ -37,12 +45,13 @@ void bison_error_data_misassign(char *, data_value *, data_value *);
     char * identifier;
     struct data_value * value;
     struct syntax_node * node;
+    struct syntax_node * fun_nodes;
 }
 
 // Bison Terminal Types
 %token<instruction> R_BEGIN R_END R_VAR R_INT R_FLOAT
-%token<instruction> R_IF R_IFELSE R_WHILE R_READ R_PRINT
-%token<instruction> S_SEMICOLON S_COLON S_ASSIGN
+%token<instruction> R_IF R_IFELSE R_WHILE R_READ R_PRINT R_RETURN R_FUN
+%token<instruction> S_SEMICOLON S_COLON S_COMMA S_ASSIGN
 %token<instruction> S_PLUS S_MINUS S_ASTERISK S_SLASH
 %token<instruction> S_PARENTL S_PARENTR S_NEGATIVE
 %token<instruction> S_LESS S_GREATER S_EQUALS S_LTE S_GTE
@@ -58,9 +67,9 @@ void bison_error_data_misassign(char *, data_value *, data_value *);
 // Grammar
 %%
 prog
-    : opt_decls R_BEGIN opt_stmts R_END {
-        // The parent node is the result of all the statements.
-        node = $3;
+    : opt_decls opt_fun_decls R_BEGIN opt_stmts R_END {
+        // The opt_stmts node is the result of all the statements.
+        node = $4;
     }
 ;
 
@@ -99,6 +108,30 @@ tipo
         // Return a zero initialized float data value.
         $$ = data_create_float(0.0);
     }
+;
+
+opt_fun_decls
+    : fun_decls
+    | %empty
+;
+
+fun_decls
+    : fun_dec S_SEMICOLON fun_decls
+    | fun_dec
+;
+
+fun_dec
+    : R_FUN V_ID S_PARENTL opt_params S_PARENTR S_COLON tipo
+        opt_decls R_BEGIN opt_stmts END
+;
+
+opt_params
+    : param_lst
+    | %empty
+;
+
+param
+    : V_ID S_COLON tipo
 ;
 
 opt_stmts
@@ -177,9 +210,13 @@ stmt
         // Create a node of INSTRUCTION PRINT
         $$ = syntax_create_print($2, NULL, NULL);
     }
-    | R_BEGIN opt_stmts R_END{
+    | R_BEGIN opt_stmts R_END {
         // Skip creation and go directly to OPT_STMTS, then STMT_LST, then STMT.
         $$ = $2;
+    }
+    | R_RETURN expr {
+        // Create a node of INSTRUCTION RETURN
+        $$ = syntax_create_return($2, NULL, NULL);
     }
 ;
 
@@ -289,6 +326,27 @@ factor
         // Return the newly created node.
         $$ = float_node;
     }
+    | V_ID S_PARENTL opt_args S_PARENTR {
+        // Create a node using a value.
+        syntax_node * fun_node;
+        char * identifier = $1;
+        // data_value * value = function_extract(/*??*/);
+        // TBD: Data type for argument list.
+        fun_node = syntax_create_value(SYNTAX_FUN, identifier, value);
+
+        // Return the newly created node.
+        $$ = fun_node;
+    }
+;
+
+opt_args
+    : arg_lst
+    | %empty
+;
+
+arg_lst
+    : expr S_COMMA arg_lst
+    | expr
 ;
 
 relop
@@ -428,7 +486,7 @@ int main(int argc, char * argv[]) {
     }
 
     // Flex and Bison parsing.
-    table = symbol_initialize(0);
+    table = symbol_initialize();
     node = syntax_initialize();
     yyparse();
     syntax_execute_nodetype(node);
