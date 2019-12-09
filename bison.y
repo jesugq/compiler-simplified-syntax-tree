@@ -139,7 +139,7 @@ stmt
         // Create a node of INSTRUCTION ASSIGN
         $$ = syntax_create_assign(id_node, $3, NULL);
         
-        // Type Check TBD.
+        // TBD: Type check.
     }
     | R_IF S_PARENTL expression S_PARENTR stmt {
         // Create a node of INSTRUCTION IF
@@ -182,34 +182,34 @@ stmt
 expression
     : expr {
         // Create a node of INSTRUCTION EXPRESSION
-        $$ = syntax_create_expression(SYNTAX_ZERO, $1, NULL, NULL);
+        $$ = syntax_create_expression(DATA_ZERO, $1, NULL, NULL);
     }
     | expr relop expr {
         // Create a node of INSTRUCTION EXPRESSION
         $$ = syntax_create_expression($2, $1, $3, NULL);
 
-        // Type Check TBD.
+        // TBD: Type check.
     }
 ;
 
 expr
     : expr S_PLUS term {
         // Create a node of INSTRUCTION EXPR
-        $$ = syntax_create_expr(SYNTAX_SUM, $1, $3, NULL);
+        $$ = syntax_create_expr(DATA_SUM, $1, $3, NULL);
 
-        // Type Check TBD.
+        // TBD: Type check.
     }
     | expr S_MINUS term {
         // Create a node of INSTRUCTION EXPR
-        $$ = syntax_create_expr(SYNTAX_SUBSTRACT, $1, $3, NULL);
+        $$ = syntax_create_expr(DATA_SUBSTRACT, $1, $3, NULL);
 
-        // Type Check TBD.
+        // TBD: Type check.
     }
     | signo term {
         // Create a node of INSTRUCTION EXPR
         $$ = syntax_create_expr($1, $2, NULL, NULL);
 
-        // Type Check TBD.
+        // TBD: Type check.
     }
     | term {
         // Skip creation and go directly to TERM
@@ -220,15 +220,15 @@ expr
 term
     : term S_ASTERISK factor {
         // Create a node of INSTRUCTION TERM
-        $$ = syntax_create_term(SYNTAX_MULTIPLY, $1, $3, NULL);
+        $$ = syntax_create_term(DATA_MULTIPLY, $1, $3, NULL);
 
-        // Type Check TBD.
+        // TBD: Type check.
     }
     | term S_SLASH factor {
         // Create a node of INSTRUCTION TERM
-        $$ = syntax_create_term(SYNTAX_DIVIDE, $1, $3, NULL);
+        $$ = syntax_create_term(DATA_DIVIDE, $1, $3, NULL);
 
-        // Type Check TBD.
+        // TBD: Type check.
     }
     | factor {
         // Skip creation and go directly to FACTOR
@@ -279,25 +279,25 @@ factor
 
 relop
     : S_LESS {
-        $$ = SYNTAX_LESS;
+        $$ = DATA_LESS;
     }
     | S_GREATER {
-        $$ = SYNTAX_GREATER;
+        $$ = DATA_GREATER;
     }
     | S_EQUALS {
-        $$ = SYNTAX_EQUALS;
+        $$ = DATA_EQUALS;
     }
     | S_LTE {
-        $$ = SYNTAX_LTE;
+        $$ = DATA_LTE;
     }
     | S_GTE {
-        $$ = SYNTAX_GTE;
+        $$ = DATA_GTE;
     }
 ;
 
 signo
     : S_NEGATIVE {
-        $$ = SYNTAX_ZERO;
+        $$ = DATA_NEGATIVE;
     }
 ;
 %%
@@ -459,6 +459,7 @@ int main(int argc, char * argv[]) {
     node = syntax_initialize();
     yyparse();
     symbol_print(table);
+    syntax_execute_nodetype(node);
 
     // Closure of file and system.
     if (yyin != NULL) fclose(yyin);

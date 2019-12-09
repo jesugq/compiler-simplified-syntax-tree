@@ -1,5 +1,6 @@
 // Imports
 #include <stdio.h>
+#include <stdlib.h>
 
 #ifndef _DATAH_
 #define _DATAH_
@@ -21,29 +22,13 @@
 #define SYNTAX_STMT         'S'
 #define SYNTAX_ASSIGN       'A'
 #define SYNTAX_IF           'I'
-#define SYNTAX_IFELSE       'E'
+#define SYNTAX_IFELSE       'F'
 #define SYNTAX_WHILE        'W'
 #define SYNTAX_READ         'R'
 #define SYNTAX_PRINT        'P'
-#define SYNTAX_BEGINEND     'B'
-#define SYNTAX_EXPRESSION   'e'
-#define SYNTAX_RELOP        'r'
+#define SYNTAX_EXPRESSION   'E'
 #define SYNTAX_EXPR         'e'
 #define SYNTAX_TERM         't'
-#define SYNTAX_FACTOR       'f'
-
-// Operations
-#define SYNTAX_LESS         '<'
-#define SYNTAX_GREATER      '>'
-#define SYNTAX_EQUALS       '='
-#define SYNTAX_LTE          'l'
-#define SYNTAX_GTE          'g'
-#define SYNTAX_ZERO         'z'
-#define SYNTAX_SUM          '+'
-#define SYNTAX_SUBSTRACT    '-'
-#define SYNTAX_MULTIPLY     '*'
-#define SYNTAX_DIVIDE       '/'
-#define SYNTAX_NEGATIVE     '~'
 
 // Declarations
 typedef struct syntax_node {
@@ -75,7 +60,6 @@ syntax_node * syntax_create_term(
 syntax_node * syntax_create_value(
     char, char*, data_value*
 );
-
 syntax_node * syntax_create_stmt(syntax_node*, syntax_node*, syntax_node*);
 syntax_node * syntax_create_assign(syntax_node*, syntax_node*, syntax_node*);
 syntax_node * syntax_create_if(syntax_node*, syntax_node*, syntax_node*);
@@ -83,3 +67,16 @@ syntax_node * syntax_create_ifelse(syntax_node*, syntax_node*, syntax_node*);
 syntax_node * syntax_create_while(syntax_node*, syntax_node*, syntax_node*);
 syntax_node * syntax_create_read(syntax_node*, syntax_node*, syntax_node*);
 syntax_node * syntax_create_print(syntax_node*, syntax_node*, syntax_node*);
+
+void syntax_execute_nodetype(syntax_node*);
+void syntax_execute_instruction(syntax_node*);
+void syntax_execute_stmt(syntax_node*);
+void syntax_execute_assign(syntax_node*);
+void syntax_execute_if(syntax_node*);
+void syntax_execute_ifelse(syntax_node*);
+void syntax_execute_while(syntax_node*);
+void syntax_execute_read(syntax_node*);
+void syntax_execute_print(syntax_node*);
+void syntax_evaluate_expression(syntax_node*);
+void syntax_operate_expr(syntax_node*);
+void syntax_operate_term(syntax_node*);

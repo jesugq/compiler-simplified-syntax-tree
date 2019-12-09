@@ -34,6 +34,53 @@ bool data_numtype_match(data_value * one, data_value * two) {
 }
 
 /**
+ * Data Evaluation evaluates two data unions.
+ * @param   one     Data of the first element.
+ * @param   two     Data of the second element.
+ * @return  If the evaluation was true or false.
+ */
+bool data_evaluation(data_value * one, data_value * two, char operation) {
+    if (!data_numtype_match(one, two)) return false;
+    if (one->numtype == DATA_INTEGER) {
+        int input_one;
+        int input_two;
+
+        if (one != NULL) input_one = one->number.int_value;
+        else input_one = 0;
+        if (two != NULL) input_two = two->number.int_value;
+        else input_two = 0;
+
+        switch (operation) {
+            case DATA_LESS:     return input_one < input_two;
+            case DATA_GREATER:  return input_one < input_two;
+            case DATA_EQUALS:   return input_one == input_two;
+            case DATA_LTE:      return input_one <= input_two;
+            case DATA_GTE:      return input_one >= input_two;
+            case DATA_ZERO:     return input_one != 0;
+            default:            return false;
+        }
+    } else if (one->numtype == DATA_FLOAT) {
+        float input_one;
+        float input_two;
+
+        if (one != NULL) input_one = one->number.float_value;
+        else input_one = 0.0;
+        if (two != NULL) input_two = two->number.float_value;
+        else input_two = 0.0;
+
+        switch (operation) {
+            case DATA_LESS:     return input_one < input_two;
+            case DATA_GREATER:  return input_one < input_two;
+            case DATA_EQUALS:   return input_one == input_two;
+            case DATA_LTE:      return input_one <= input_two;
+            case DATA_GTE:      return input_one >= input_two;
+            case DATA_ZERO:     return input_one != 0;
+            default:            return false;
+        }
+    } else return false;
+}
+
+/**
  * Data Create Integer returns a DATA type using the parameters sent.
  * @param   number      Value of this number.
  * @return  Data instance of an integer.
@@ -69,30 +116,42 @@ data_value * data_create_float(float number) {
 data_value * data_operation(
     data_value * one, data_value * two, char operation
 ){
-    if (one->numtype != two->numtype) return data_create_integer(0);
+    if (!data_numtype_match(one, two)) return data_create_integer(0);
     if (one->numtype == DATA_INTEGER) {
-        int input_one = one->number.int_value;
-        int input_two = two->number.int_value;
-        int output = 0;
+        int input_one;
+        int input_two;
+        int output;
+
+        if (one != NULL) input_one = one->number.int_value;
+        else input_one = 0;
+        if (two != NULL) input_two = two->number.int_value;
+        else input_two = 0;
 
         switch (operation) {
             case DATA_SUM:          output = input_one + input_two; break;
             case DATA_SUBSTRACT:    output = input_one - input_two; break;
             case DATA_MULTIPLY:     output = input_one * input_two; break;
             case DATA_DIVIDE:       output = input_one / input_two; break;
+            case DATA_NEGATIVE:     output = input_one * -1;
             default:                output = 0; break;
         }
         return data_create_integer(output);
     } else if (one->numtype == DATA_FLOAT) {
-        float input_one = one->number.float_value;
-        float input_two = two->number.float_value;
-        float output = 0;
+        float input_one;
+        float input_two;
+        float output;
+
+        if (one != NULL) input_one = one->number.float_value;
+        else input_one = 0.0;
+        if (two != NULL) input_two = two->number.float_value;
+        else input_two = 0.0;
 
         switch (operation) {
             case DATA_SUM:          output = input_one + input_two; break;
             case DATA_SUBSTRACT:    output = input_one - input_two; break;
             case DATA_MULTIPLY:     output = input_one * input_two; break;
             case DATA_DIVIDE:       output = input_one / input_two; break;
+            case DATA_NEGATIVE:     output = input_one * -1;
             default:                output = 0; break;
         }
         return data_create_float(output);
