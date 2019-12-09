@@ -19,7 +19,6 @@
  * check that they match, the type that the function returns and its value, with
  * standalone symbol tables and syntax node trees.
  * @param   args        Argument count of the function.
- * @param   numtype     Type of the function.
  * @param   identifier  Identifier of the function.
  * @param   list        Parameter list of the function.
  * @param   value       Value of the function.
@@ -29,7 +28,6 @@
 // typedef struct function_info {
 //     int args;
 //     int index;
-//     char numtype;
 //     char * identifier;
 //     param_list * list;
 //     data_value * value;
@@ -197,7 +195,6 @@ bool function_insert(
     function_info info;
     info.args = args;
     info.index = i;
-    info.numtype = value->numtype;
     info.identifier = identifier;
     info.list = list;
     info.value = value;

@@ -116,6 +116,11 @@ opt_params
     | %empty
 ;
 
+param_lst
+    : param S_COMMA param_list
+    | param
+;
+
 param
     : V_ID S_COLON tipo
 ;
@@ -199,6 +204,7 @@ Bison has to handle the values that each terminal returns inside of an union. Th
     int instruction;            // Integer instruction of the terminal read.
     char * identifier;          // String of the idenfitier read.
     struct data_value value;    // Value that can either be integer or float.
+    struct symbol_table table;  // Table of symbols.
     struct syntax_node * node;  // Node of this expression.
 }
 ```
@@ -269,7 +275,6 @@ typedef struct param_list {
 typedef struct function_info {
     int args;                   // Number of arguments of the function.
     int index;                  // Index position of the function.
-    char numtype;               // Type of the function.
     char * identifier;          // Identifier of the function.
     param_list * list;          // Parameter List of the function.
     data_value * value;         // Value of the function.

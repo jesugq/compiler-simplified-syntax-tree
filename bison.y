@@ -22,6 +22,7 @@
 // Global Table
 symbol_table * table;
 syntax_node * node;
+function_batch * batch;
 
 // Flex externals
 extern FILE * yyin;
@@ -45,6 +46,7 @@ void bison_error_data_mismatch(data_value *, data_value *);
     char * identifier;
     struct data_value * value;
     struct syntax_node * node;
+    struct symbol_table * table;
     struct syntax_node * fun_nodes;
 }
 
@@ -60,27 +62,43 @@ void bison_error_data_mismatch(data_value *, data_value *);
 %token<value> V_NUMFLOAT
 
 // Bison Non Terminal Types
-%type<operation> relop signo
 %type<value> tipo
+%type<table> opt_decls decls dec
 %type<node> opt_stmts stmt_lst stmt expression expr term factor
+%type<operation> relop signo
 
 // Grammar
 %%
 prog
     : opt_decls opt_fun_decls R_BEGIN opt_stmts R_END {
-        // The opt_stmts node is the result of all the statements.
+        // The opt_decls contain the tables.
+        table = $1;
+
+        // The opt_stmts contain the nodes.
         node = $4;
     }
 ;
 
 opt_decls
-    : decls
-    | %empty
+    : decls {
+        // Directly return the table.
+        $$ = $1;
+    }
+    | %empty {
+        // Create an empty table.
+        $$ = symbol_initialize();
+    }
 ;
 
 decls
-    : dec S_SEMICOLON decls
-    | dec
+    : dec S_SEMICOLON decls {
+        // Directly return the table.
+        $$ = $3;
+    }
+    | dec {
+        // Diretly return the table.
+        $$ = $1;
+    }
 ;
 
 dec
@@ -96,6 +114,8 @@ dec
             bison_error_identifier_failed($2);
             YYERROR;
         }
+
+        $$ = table;
     }
 ;
 
@@ -122,12 +142,26 @@ fun_decls
 
 fun_dec
     : R_FUN V_ID S_PARENTL opt_params S_PARENTR S_COLON tipo
-        opt_decls R_BEGIN opt_stmts END
+        opt_decls R_BEGIN opt_stmts END {
+        // Notes.
+        // $2  = IDENTIFIER
+        // $4  = LIST
+        // $7  = VALUE
+        // $8  = TABLE
+        // $10 = NODE
+        // Calculate ARGS
+        // Create Function
+    }
 ;
 
 opt_params
     : param_lst
     | %empty
+;
+
+param_lst
+    : param S_COMMA param_list
+    | param
 ;
 
 param

@@ -30,7 +30,6 @@ typedef struct param_list {
 typedef struct function_info {
     int args;
     int index;
-    char numtype;
     char * identifier;
     param_list * list;
     data_value * value;
