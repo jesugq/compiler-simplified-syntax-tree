@@ -21,6 +21,8 @@
 // Global Table
 symbol_table * table;
 syntax_node * node;
+char * function_identifier;
+int function_args = -1;
 
 // Flex externals
 extern FILE * yyin;
@@ -35,7 +37,9 @@ void bison_error_identifier_repeated(char *);
 void bison_error_identifier_failed(char *);
 void bison_error_identifier_missing(char *);
 void bison_error_data_mismatch(data_value *, data_value *);
-void bison_error_data_misassign(char *, data_value *, data_value *);
+void bison_error_not_function(char *);
+void bison_error_not_identifier(char *);
+void bison_error_arg_mismatch(char *);
 %}
 
 // Bison Union
@@ -43,6 +47,7 @@ void bison_error_data_misassign(char *, data_value *, data_value *);
     char operation;
     int instruction;
     char * identifier;
+    struct param_list * list;
     struct data_value * value;
     struct syntax_node * node;
     struct symbol_table * table;
@@ -61,41 +66,28 @@ void bison_error_data_misassign(char *, data_value *, data_value *);
 
 // Bison Non Terminal Types
 %type<operation> relop signo
+%type<list> opt_params param_lst param
 %type<value> tipo
-%type<node> opt_stmts stmt_lst stmt expression expr term factor
+%type<node> opt_stmts stmt_lst stmt expression expr term factor opt_args arg_lst
 %type<table> opt_decls decls dec
 
 // Grammar
 %%
 prog
-    : opt_decls R_BEGIN opt_stmts R_END {
-        table = $1;
-
-        // The parent node is the result of all the statements.
+    : opt_decls opt_fun_decls R_BEGIN opt_stmts R_END {
+        // The node is given by opt_stmts.
         node = $3;
     }
 ;
 
 opt_decls
-    : decls {
-        // Directly return the table.
-        $$ = $1;
-    }
-    | %empty {
-        // Generate an empty table.
-        $$ = symbol_initialize();
-    }
+    : decls
+    | %empty
 ;
 
 decls
-    : dec S_SEMICOLON decls {
-        // Directly return the table.
-        $$ = $3;
-    }
-    | dec {
-        // Directly return the table.
-        $$ = $1;
-    }
+    : dec S_SEMICOLON decls
+    | dec
 ;
 
 dec
@@ -111,9 +103,66 @@ dec
             bison_error_identifier_failed($2);
             YYERROR;
         }
+    }
+;
 
-        // Return the table.
-        $$ = table;
+opt_fun_decls
+    : fun_decls
+    | %empty
+;
+
+fun_decls
+    : fun_dec S_SEMICOLON fundecls
+    | fun_dec
+;
+
+fun_dec
+    : R_FUN V_ID S_PARENTL opt_params S_PARENTR S_COLON tipo
+      opt_decls R_BEGIN opt_stmts R_END {
+        // Verify that the identifier is unique.
+        if (symbol_exists(table, $2)) {
+            bison_error_identifier_repeated($2);
+            YYERROR;
+        }
+
+        // Verify that the identifier was inserted.
+        if (!symbol_insert_function(table, $2, $7, $4, $10)) {
+            bison_error_identifier_failed($2);
+            YYERROR;
+        }
+    }
+;
+
+opt_params
+    : param_lst
+    | %empty
+;
+
+param_lst
+    : param S_COMMA param_lst {
+        $$ = symbol_param_join($1, $2);
+    }
+    | param {
+        $$ = $1;
+    }
+;
+
+param
+    : V_ID S_COLON tipo {
+        // Verify that the identifier is unique.
+        if (symbol_exists(table, $2)) {
+            bison_error_identifier_repeated($2);
+            YYERROR;
+        }
+
+        // Verify that the identifier was inserted.
+        if (!symbol_insert_identifier(table, $1, $3)) {
+            bison_error_identifier_failed($2);
+            YYERROR;
+        }
+
+        // Create a parameter using an identifier.
+        $$ = symbol_param_create($1, $2);
     }
 ;
 
@@ -208,6 +257,10 @@ stmt
         // Skip creation and go directly to OPT_STMTS, then STMT_LST, then STMT.
         $$ = $2;
     }
+    | R_RETURN expr {
+        // Create a node of INSTRUCTION RETURN
+        $$ = syntax_create_return($1, NULL, NULL);
+    }
 ;
 
 expression
@@ -289,11 +342,16 @@ factor
             YYERROR;
         }
 
+        // Verify that the identifier is an identifier.
+        if (!symbol_is_identifier(table, $1)) {
+            bison_error_not_identifier($1);
+            YYERROR;
+        }
+
         // Create a node using an identifier.
         syntax_node * id_node;
-        char * identifier = $1;
-        data_value * value = symbol_get_value(table, identifier);
-        id_node = syntax_create_value(SYNTAX_IDENTIFIER, identifier, value);
+        data_value * value = symbol_get_value(table, $1);
+        id_node = syntax_create_value(SYNTAX_IDENTIFIER, $1, value);
 
         // Return the newly created node.
         $$ = id_node;
@@ -316,7 +374,55 @@ factor
         // Return the newly created node.
         $$ = float_node;
     }
+    | V_ID S_PARENTL opt_args S_PARENTR {
+        // Verify that the identifier exists.
+        if (!symbol_exists(table, $1)) {
+            bison_error_identifier_missing($1);
+            YYERROR;
+        }
+
+        // Verify that the identifier is a function.
+        if (!symbol_is_function(table, $1)) {
+            bison_error_not_function($1);
+            YYERROR;
+        }
+
+        // Verify that the argument count is correct.
+        if (!symbol_arguments_match(table, $1, function_args+1)) {
+            bison_error_arg_mismatch($1);
+            YYERROR;
+        }
+
+        // Create a node that runs a function.
+        syntax_node * function_node;
+        data_value * value = symbol_get_value($1);
+        function_node = syntax_create_function($1, value, $3);
+        
+        // Return the newly created node.
+        $$ = function_node;
+    }
 ;
+
+opt_args
+    : arg_lst {
+        // Directly return the parameter.
+        $$ = $1;
+    }
+    | %empty {
+        // Return nothing.
+        $$ = NULL;
+    }
+;
+
+arg_lst {
+    : expr S_COMMA arg_lst {
+        // Create a node of arg.
+        $$ = syntax_create_arg($1, $3, NULL);
+    }
+    | expr {
+        $$ = syntax_create_arg($1, NULL, NULL);
+    }
+}
 
 relop
     : S_LESS {
@@ -407,7 +513,6 @@ void bison_error_data_mismatch(data_value * one, data_value * two) {
     char erri[] = "int:";
     char errf[] = "float:";
     char errn[] = "unknown";
-
     if (one->numtype == DATA_INTEGER) {
         strcat(error, erri);
         sprintf(hold, "%d", one->number.int_value);
@@ -419,9 +524,7 @@ void bison_error_data_mismatch(data_value * one, data_value * two) {
         strcat(error, hold);
     }
     else strcat(error, errn);
-
     strcat(error, erra);
-
     if (two->numtype == DATA_INTEGER) {
         strcat(error, erri);
         sprintf(hold, "%d", two->number.int_value);
@@ -433,7 +536,28 @@ void bison_error_data_mismatch(data_value * one, data_value * two) {
         strcat(error, hold);
     }
     else strcat(error, errn);
+    yyerror(error);
+}
 
+/**
+ * Bison Error Not Identifier prints that the identifier read was found to be
+ * a function instead of an identifier.
+ * @param   identifier  Identifier found to be a function.
+ */
+void bison_error_not_identifier(char * identifier) {
+    char error[1000] = "called identifier but found a function: ";
+    strcat(error, identifier);
+    yyerror(error);
+}
+
+/**
+ * Bison Error Not Function prints that the identifier read was found to be
+ * an identifier instead of a function.
+ * @param   identifier  Identifier found not to be a function.
+ */
+void bison_error_not_function(char * identifier) {
+    char error[1000] = "called a function but found an identifier: ";
+    strcat(error, identifier);
     yyerror(error);
 }
 
@@ -457,8 +581,8 @@ int main(int argc, char * argv[]) {
     // Flex and Bison parsing.
     table = symbol_initialize();
     node = syntax_initialize();
-    yyparse();
-    syntax_execute_nodetype(node);
+    int success = yyparse();
+    if (success) syntax_execute_nodetype(node);
     symbol_print(table);
 
     // Closure of file and system.

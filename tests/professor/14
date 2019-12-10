@@ -27,13 +27,13 @@ begin
    begin
       read xx;
       read yy;
-      resultadof <- gg(xx, yy);
+      resultadof <- gg(xx, yy)
    end
    begin
       xx <- 100.34;
       yy <- 23.23;
-      resultadof <- gg(xx, yy);
-   end
+      resultadof <- gg(xx, yy)
+   end;
    print xx;
    print yy;
    print resultadof

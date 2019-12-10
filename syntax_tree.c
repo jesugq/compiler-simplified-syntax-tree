@@ -46,7 +46,6 @@ syntax_node * syntax_initialize() {
     return node;
 }
 
-
 /**
  * Syntax Create Node creates an node of the type specified on nodetype, which
  * will define the content inside of info. Documentation regarding how the

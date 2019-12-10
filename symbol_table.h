@@ -30,12 +30,12 @@ typedef struct param_list {
 } param_list;
 typedef struct symbol_item {
     int key;
+    int args;
     char symtype;
     char * identifier;
     struct data_value * value;
     struct param_list * list;
     struct syntax_node * node;
-    struct symbol_table * table;
 } symbol_item;
 typedef struct symbol_table {
     int size;
@@ -45,20 +45,27 @@ typedef struct symbol_table {
 
 symbol_table * symbol_initialize();
 symbol_item * symbol_itemize();
+
+int symbol_param_count(param_list *);
+param_list * symbol_param_join(param_list *, param_list *);
+param_list * symbol_param_create(char *, data_value *);
+data_value * symbol_param_value(symbol_table *, char *, int);
+
 void symbol_print(symbol_table *);
 int symbol_hash_key(char *);
 int symbol_hash_index(int);
-
 int symbol_search(symbol_table *, char *);
 bool symbol_exists(symbol_table *, char *);
 bool symbol_is_full(symbol_table *);
+bool symbol_is_identifier(symbol_table *, char *);
+bool symbol_is_function(symbol_table *, char *);
 bool symbol_insert_identifier(symbol_table *, char *, data_value *);
+bool symbol_assign(symbol_table *, char *, data_value *);
 bool symbol_insert_function(
     symbol_table *, char *, data_value *,
-    param_list *, syntax_node *, symbol_table *
+    param_list *, syntax_node *
 );
-bool symbol_assign(symbol_table *, char *, data_value *);
+
 data_value * symbol_get_value(symbol_table *, char *);
 param_list * symbol_get_list(symbol_table *, char *);
-symbol_table * symbol_get_table(symbol_table *, char *);
 syntax_node * symbol_get_node(symbol_table *, char *);

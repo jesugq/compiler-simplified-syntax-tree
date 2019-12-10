@@ -63,6 +63,9 @@ syntax_node * syntax_create_term(
 syntax_node * syntax_create_value(
     char, char*, data_value*
 );
+syntax_node * syntax_create_function(
+    char *, data_value *, syntax_node *
+);
 syntax_node * syntax_create_stmt(syntax_node*, syntax_node*, syntax_node*);
 syntax_node * syntax_create_assign(syntax_node*, syntax_node*, syntax_node*);
 syntax_node * syntax_create_if(syntax_node*, syntax_node*, syntax_node*);
@@ -70,6 +73,7 @@ syntax_node * syntax_create_ifelse(syntax_node*, syntax_node*, syntax_node*);
 syntax_node * syntax_create_while(syntax_node*, syntax_node*, syntax_node*);
 syntax_node * syntax_create_read(syntax_node*, syntax_node*, syntax_node*);
 syntax_node * syntax_create_print(syntax_node*, syntax_node*, syntax_node*);
+void syntax_create_arg(syntax_node*, syntax_node*, syntax_node*);
 
 void syntax_execute_nodetype(syntax_node*);
 void syntax_execute_instruction(syntax_node*);

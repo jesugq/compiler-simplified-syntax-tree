@@ -4,6 +4,9 @@
  * Param List has the amount of parameters and the contents of them when the
  * symbol item is of type function. Using this we can observe if calling a
  * function was correct.
+ * @param   identifier  Identifier of the parameter.
+ * @param   value       Value of the parameter.
+ * @param   next        Next parameter.
  */
 // typedef struct param_list {
 //     char * identifier;
@@ -16,22 +19,22 @@
  * key, the identifier string, its numtype and the data_value union, which can 
  * be accessed depending on the numtype.
  * @param   key         Hash key of this node.
+ * @param   args        Argument count.
  * @param   symtype     Type of this node.
  * @param   identifier  String identifier of this node.
  * @param   numtype     Numerical type of this node.
  * @param   value       Union value of this node.
  * @param   list        List of this node.
  * @param   node        Node of this node.
- * @param   table       Table of this node.
  */
 // typedef struct symbol_item {
 //     int key;
+//     int args;
 //     char symtype;
 //     char * identifier;
 //     struct data_value * value;
 //     struct param_list * list;
 //     struct syntax_node * node;
-//     struct symbol_table * table;
 // } symbol_item;
 
 /**
@@ -68,6 +71,65 @@ symbol_item * symbol_itemize() {
     for (i=0; i<SYMBOL_SIZE; i++)
         items[i].symtype = SYMBOL_EMPTY;
     return items;
+}
+
+/**
+ * Symbol Param Count returns the number of arguments in this node.
+ * @param   list    List to count for.
+ * @return  Number of arguments in the list.
+ */
+int symbol_param_count(param_list * list) {
+    int i = 0;
+    while (list != NULL) {
+        list = list->next;
+        i ++;
+    }
+    return i;
+}
+
+/**
+ * Symbol Param Join creates a param list followed by a param list.
+ * @param   one     First parameter.
+ * @param   two     Second parameter.
+ * @return  The first parameter, the pointer to the head.
+ */
+param_list * symbol_param_join(param_list * one, param_list * two) {
+    one->next = two;
+    return one;
+}
+
+/**
+ * Symbol Paramize creates a single param list.
+ * @param   identifier  Identifier of the parameter.
+ * @param   value       Value of the parameter.
+ * @return  Single parameter.
+ */
+param_list * symbol_param_create(char * identifier, data_value * value) {
+    param_list * list;
+    list = (param_list *)calloc(1, sizeof(param_list));
+    list->identifier = identifier;
+    list->value = value;
+    list->next = NULL;
+    return list;
+}
+
+/**
+ * Symbol Param Value returns the data found at index function_args.
+ * 
+ */
+data_value * symbol_param_value(
+    symbol_table * table, char * identifier, int function_args
+) {
+    param_list * list = symbol_get_list(table, identifier);
+    if (list == NULL) return data_create_integer(0);
+
+    int i = 0;
+    while (i <= function_args) {
+        if (list->next == NULL)
+            list = list->next;
+        i ++;
+    }
+    return list->value;
 }
 
 /**
@@ -173,12 +235,34 @@ bool symbol_exists(symbol_table * table, char * identifier) {
 }
 
 /**
- * Symbol Table Is Fulll tells about the occupancy of the symbol table.
+ * Symbol Table Is Full tells about the occupancy of the symbol table.
  * @param   table   Symbol table.
  * @return  True if the symbol table is full.
  */
 bool symbol_is_full(symbol_table * table) {
     return table->size == SYMBOL_SIZE;
+}
+
+/**
+ * Symbol is Identifier returns true if the symbol is found and is an identifier
+ * @param   table       Symbol table.
+ * @param   identifier  Identifier to look for.
+ */
+bool symbol_is_identifier(symbol_table * table, char * identifier) {
+    int index = symbol_search(table, identifier);
+    if (index == SYMBOL_NOT_FOUND) return false;
+    return table->items[index].symtype == SYMBOL_IDENTIFIER;
+}
+
+/**
+ * Symbol is Identifier returns true if the symbol is found and is a function.
+ * @param   table       Symbol table.
+ * @param   identifier  Identifier to look for.
+ */
+bool symbol_is_function(symbol_table * table, char * identifier) {
+    int index = symbol_search(table, identifier);
+    if (index == SYMBOL_NOT_FOUND) return false;
+    return table->items[index].symtype == SYMBOL_FUNCTION;
 }
 
 /**
@@ -205,12 +289,12 @@ bool symbol_insert_identifier(
 
     symbol_item item;
     item.key = key;
+    item.args = 0;
     item.symtype = SYMBOL_IDENTIFIER;
     item.identifier = identifier;
     item.value = value;
     item.list = NULL;
     item.node = NULL;
-    item.table = NULL;
     table->items[curr] = item;
     return true;
 }
@@ -222,12 +306,11 @@ bool symbol_insert_identifier(
  * @param   value       Value of the identifier.
  * @param   list        List of the identifier.
  * @param   node        Node of the identifier.
- * @param   tablein     Table inside of the identifier.
  * @return  True if the insertion was successful.
  */
 bool symbol_insert_function(
     symbol_table * table, char * identifier, data_value * value,
-    param_list * list, syntax_node * node, symbol_table * tablein
+    param_list * list, syntax_node * node
 ) {
     if (symbol_is_full(table)) return false;
     
@@ -243,12 +326,12 @@ bool symbol_insert_function(
 
     symbol_item item;
     item.key = key;
+    item.args = symbol_param_count(list);
     item.symtype = SYMBOL_IDENTIFIER;
     item.identifier = identifier;
     item.value = value;
     item.list = list;
     item.node = node;
-    item.table = tablein;
     table->items[curr] = item;
     return true;
 }
@@ -295,18 +378,6 @@ param_list * function_observe(symbol_table * table, char * identifier) {
     int i = symbol_search(table, identifier);
     if (i == SYMBOL_NOT_FOUND) return NULL;
     return table->items[i].list;
-}
-
-/**
- * Function Get Table gets the symbol_table from the function.
- * @param   table       Function table.
- * @param   identifier  Identifier to search for.
- * @return  The table inside of the function.
- */
-symbol_table * symbol_get_table(symbol_table * table, char * identifier) {
-    int i = symbol_search(table, identifier);
-    if (i == SYMBOL_NOT_FOUND) return symbol_initialize();
-    return table->items[i].table;
 }
 
 /**
