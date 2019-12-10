@@ -211,6 +211,31 @@ syntax_node * syntax_create_value(
 }
 
 /**
+ * Syntax Create Function is used for the creation of a function.
+ * @param   identifier  Identifier of the function.
+ * @param   value       Value of the function.
+ * @param   nodea       First node.
+ * @return  Node created.
+ */
+syntax_node * syntax_create_function(
+    char * identifier,
+    data_value * value,
+    syntax_node * nodea
+) {
+    return syntax_create_node(
+        SYNTAX_INSTRUCTION,
+        SYNTAX_NULLT,
+        SYNTAX_NULLB,
+        SYNTAX_FUNCTION,
+        identifier,
+        value,
+        nodea,
+        SYNTAX_NULLV,
+        SYNTAX_NULLV
+    );
+}
+
+/**
  * Basic Node Creation for the Instructions named below.
  * @param   nodea   First node.
  * @param   nodeb   Second node.
@@ -377,6 +402,56 @@ syntax_node * syntax_create_print(
         SYNTAX_NULLT,
         SYNTAX_NULLB,
         SYNTAX_PRINT,
+        SYNTAX_NULLV,
+        SYNTAX_NULLV,
+        nodea,
+        nodeb,
+        nodec
+    );
+}
+
+/**
+ * Syntax Create Return creates a node of return.
+ * @param   nodea   First node.
+ * @param   nodeb   Second node.
+ * @param   nodec   Third node.
+ * @return  Node created.
+ */
+syntax_node * syntax_create_return(
+    syntax_node * nodea,
+    syntax_node * nodeb,
+    syntax_node * nodec
+) {
+    return syntax_create_node(
+        SYNTAX_INSTRUCTION,
+        SYNTAX_NULLT,
+        SYNTAX_NULLB,
+        SYNTAX_RETURN,
+        SYNTAX_NULLV,
+        SYNTAX_NULLV,
+        nodea,
+        nodeb,
+        nodec
+    );
+}
+
+/**
+ * Syntax Create Arg creates a node of arg.
+ * @param   nodea   First node.
+ * @param   nodeb   Second node.
+ * @param   nodec   Third node.
+ * @return  Node created.
+ */
+syntax_node * syntax_create_arg(
+    syntax_node * nodea,
+    syntax_node * nodeb,
+    syntax_node * nodec
+) {
+    return syntax_create_node(
+        SYNTAX_INSTRUCTION,
+        SYNTAX_NULLT,
+        SYNTAX_NULLB,
+        SYNTAX_ARG,
         SYNTAX_NULLV,
         SYNTAX_NULLV,
         nodea,

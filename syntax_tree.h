@@ -30,6 +30,9 @@
 #define SYNTAX_EXPRESSION   'E'
 #define SYNTAX_EXPR         'e'
 #define SYNTAX_TERM         't'
+#define SYNTAX_FUNCTION     'F'
+#define SYNTAX_RETURN       'r'
+#define SYNTAX_ARG          'A'
 
 // Declarations
 typedef struct syntax_node {
