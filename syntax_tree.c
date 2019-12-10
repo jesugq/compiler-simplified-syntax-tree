@@ -497,7 +497,7 @@ void syntax_print_node(syntax_node * node) {
  */
 void syntax_execute_nodetype(syntax_node * node) {
     // Check if the node is null.
-    // syntax_print_node(node);
+    // syntax_print_node(node);;
     if (node == NULL) return;
 
     // Decide what to do depending on the type of node.
