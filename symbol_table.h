@@ -62,8 +62,8 @@ bool symbol_insert_function(
 );
 
 int symbol_get_args(symbol_table *, char *);
-data_value * symbol_get_value(symbol_table *, char *);
 // bool symbol_assign(symbol_table *, char *, data_value *);
+// data_value * symbol_get_value(symbol_table *, char *);
 // param_list * symbol_get_list(symbol_table *, char *);
 // syntax_node * symbol_get_node(symbol_table *, char *);
 

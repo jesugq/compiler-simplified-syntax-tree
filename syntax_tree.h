@@ -113,11 +113,13 @@ void syntax_execute_print(syntax_node*);
 void syntax_evaluate_expression(syntax_node*);
 void syntax_operate_expr(syntax_node*);
 void syntax_operate_term(syntax_node*);
+void syntax_operate_identifier(syntax_node *);
 void syntax_execute_function(syntax_node*);
 void syntax_execute_return(syntax_node*);
 void syntax_update_args(syntax_node*, param_list*);
 
 bool symbol_assign(symbol_table *, char *, data_value *);
+data_value * symbol_get_value(symbol_table *, char *);
 param_list * symbol_get_list(symbol_table *, char *);
 syntax_node * symbol_get_node(symbol_table *, char *);
 

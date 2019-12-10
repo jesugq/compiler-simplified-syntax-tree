@@ -1,0 +1,12 @@
+var x : int
+
+fun ff (aa : int, bb : int) : int
+var cc : int
+begin
+    cc <- aa + bb;
+    return cc
+end
+
+begin
+    x <- ff(1, 2)
+end

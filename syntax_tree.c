@@ -477,7 +477,7 @@ bool syntax_check_types(syntax_node * one, syntax_node * two) {
  */
 void syntax_print_node(syntax_node * node) {
     if (node == NULL) {
-        printf("This node is null.\n");
+        printf("\nThis node is null.\n");
         return;
     }
     printf("\nNODE STATUS\n");
@@ -485,6 +485,16 @@ void syntax_print_node(syntax_node * node) {
     printf("operation = %c\n", node->operation);
     printf("evaluation = %d\n", node->evaluation);
     printf("instruction = %c\n", node->instruction);
+    printf("identifier = %s\n", node->identifier);
+    if (node->value != NULL) {
+        if (node->value->numtype == DATA_INTEGER) {
+            printf("numtype = %c\n", node->value->numtype);
+            printf("integer = %d\n", node->value->number.int_value);
+        } else {
+            printf("numtype = %c\n", node->value->numtype);
+            printf("floating = %f\n", node->value->number.float_value);
+        }
+    }
     if (node->value != NULL) printf("value = %c\n", node->value->numtype);
     if (node->nodea != NULL) printf("nodea = %c\n", node->nodea->nodetype);
     if (node->nodeb != NULL) printf("nodeb = %c\n", node->nodeb->nodetype);
@@ -497,7 +507,7 @@ void syntax_print_node(syntax_node * node) {
  */
 void syntax_execute_nodetype(syntax_node * node) {
     // Check if the node is null.
-    // syntax_print_node(node);;
+    // syntax_print_node(node);
     if (node == NULL) return;
 
     // Decide what to do depending on the type of node.
@@ -506,6 +516,7 @@ void syntax_execute_nodetype(syntax_node * node) {
             syntax_execute_instruction(node);
             break;
         case SYNTAX_IDENTIFIER:
+            syntax_operate_identifier(node);
             break;
         case SYNTAX_VALUE:
             break;
@@ -614,6 +625,7 @@ void syntax_execute_assign(syntax_node * node) {
 
     // Assign the value in nodeb to nodea.
     nodea_value->number = nodeb_value->number;
+    symbol_assign(global_table, node->nodea->identifier, nodeb_value);
 }
 
 /**
@@ -733,11 +745,13 @@ void syntax_execute_read(syntax_node * node) {
         printf("\nEnter an integer for the identifier %s : ", nodea_identifier);
         scanf("%d", &input);
         nodea_value->number.int_value = input;
+        symbol_assign(global_table, node->nodea->identifier, node->nodea->value);
     } else if (numtype == DATA_FLOAT) {
         float input;
         printf("\nEnter a float for the identifier %s :", nodea_identifier);
         scanf("%f", &input);
         nodea_value->number.float_value = input;
+        symbol_assign(global_table, node->nodea->identifier, node->nodea->value);
     } else {
         printf("Read: The nodea is of type unknown.\n");
         exit(EXIT_FAILURE);
@@ -933,6 +947,7 @@ void syntax_execute_function(syntax_node * node) {
 
     // Update the contents.
     if (global_value != NULL) node->value = global_value;
+    symbol_assign(global_table, node->identifier, node->value);
 }
 
 /**
@@ -966,4 +981,17 @@ void syntax_update_args(syntax_node * node, param_list * list) {
 
     // Execute next args.
     syntax_update_args(node->nodeb, list->next);
+}
+
+/**
+ * Syntax Operate ID updates the value in the node with the one
+ * from the symbol table.
+ * @param   node    Node to run
+ */
+void syntax_operate_identifier(syntax_node * node) {
+    // Check if the node is null.
+    if (node == NULL) return;
+
+    // Update the value with the one from the symbol table.
+    node->value = symbol_get_value(global_table, node->identifier);
 }
