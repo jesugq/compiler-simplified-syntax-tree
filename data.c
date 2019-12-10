@@ -1,7 +1,4 @@
-#ifndef _DATAH_
-#define _DATAH_
 #include "data.h"
-#endif
 
 /**
  * Union Number stores the content of the value in either an integer type or a

@@ -1,19 +1,14 @@
+#ifndef _SYMBOLH_
+#define _SYMBOLH_
+
 // Imports
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-
-#ifndef _DATAH_
-#define _DATAH_
 #include "data.h"
-#endif
-
-#ifndef _SYNTAXH_
-#define _SYNTAXH_
 #include "syntax_tree.h"
-#endif
 
 // Definitions
 #define SYMBOL_SIZE         30
@@ -22,26 +17,26 @@
 #define SYMBOL_IDENTIFIER   'I'
 #define SYMBOL_FUNCTION     'F'
 
-// Declarations
-typedef struct param_list {
-    char * identifier;
-    data_value * value;
-    struct param_list * next;
-} param_list;
-typedef struct symbol_item {
-    int key;
-    int args;
-    char symtype;
-    char * identifier;
-    struct data_value * value;
-    struct param_list * list;
-    struct syntax_node * node;
-} symbol_item;
-typedef struct symbol_table {
-    int size;
-    char symtype;
-    struct symbol_item * items;
-} symbol_table;
+// Declarations (Circular Header Inclusion)
+// typedef struct param_list {
+//     char * identifier;
+//     data_value * value;
+//     struct param_list * next;
+// } param_list;
+// typedef struct symbol_item {
+//     int key;
+//     int args;
+//     char symtype;
+//     char * identifier;
+//     struct data_value * value;
+//     struct param_list * list;
+//     struct syntax_node * node;
+// } symbol_item;
+// typedef struct symbol_table {
+//     int size;
+//     char symtype;
+//     struct symbol_item * items;
+// } symbol_table;
 
 symbol_table * symbol_initialize();
 symbol_item * symbol_itemize();
@@ -61,7 +56,6 @@ bool symbol_is_full(symbol_table *);
 bool symbol_is_identifier(symbol_table *, char *);
 bool symbol_is_function(symbol_table *, char *);
 bool symbol_insert_identifier(symbol_table *, char *, data_value *);
-bool symbol_assign(symbol_table *, char *, data_value *);
 bool symbol_insert_function(
     symbol_table *, char *, data_value *,
     param_list *, syntax_node *
@@ -69,5 +63,8 @@ bool symbol_insert_function(
 
 int symbol_get_args(symbol_table *, char *);
 data_value * symbol_get_value(symbol_table *, char *);
-param_list * symbol_get_list(symbol_table *, char *);
-syntax_node * symbol_get_node(symbol_table *, char *);
+// bool symbol_assign(symbol_table *, char *, data_value *);
+// param_list * symbol_get_list(symbol_table *, char *);
+// syntax_node * symbol_get_node(symbol_table *, char *);
+
+#endif

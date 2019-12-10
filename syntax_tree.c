@@ -1,7 +1,4 @@
-#ifndef _SYNTAXH_
-#define _SYNTAXH_
 #include "syntax_tree.h"
-#endif
 
 /**
  * Tree Node is each instance of a node that can be added in order to interpret
@@ -557,10 +554,13 @@ void syntax_execute_instruction(syntax_node * node) {
             break;
         case SYNTAX_TERM:
             syntax_operate_term(node);
+            break;
         case SYNTAX_FUNCTION:
             syntax_execute_function(node);
+            break;
         case SYNTAX_RETURN:
             syntax_execute_return(node);
+            break;
         default:
             break;
     }
@@ -924,8 +924,8 @@ void syntax_execute_function(syntax_node * node) {
     // Update params.
     syntax_node * function_node;
     param_list * function_list;
-    function_node = symbol_get_node(global_value, node->identifier);
-    function_list = symbol_get_list(global_value, node->identifier);
+    function_node = symbol_get_node(global_table, node->identifier);
+    function_list = symbol_get_list(global_table, node->identifier);
     syntax_update_args(node->nodea, function_list);
 
     // Execute nodes.

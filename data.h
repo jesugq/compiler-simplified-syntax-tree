@@ -1,3 +1,6 @@
+#ifndef _DATAH_
+#define _DATAH_
+
 // Imports
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,3 +40,5 @@ data_value * data_create_integer(int);
 data_value * data_create_float(float);
 data_value * data_operation(data_value*, data_value*, char);
 data_value * data_negative(data_value*);
+
+#endif

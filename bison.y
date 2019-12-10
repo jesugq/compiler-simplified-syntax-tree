@@ -2,21 +2,9 @@
 // Imports
 #include <stdio.h>
 #include <stdbool.h>
-
-#ifndef _DATAH_
-#define _DATAH_
 #include "data.h"
-#endif
-
-#ifndef _SYMBOLH_
-#define _SYMBOLH_
 #include "symbol_table.h"
-#endif
-
-#ifndef _SYNTAXH_
-#define _SYNTAXH_
 #include "syntax_tree.h"
-#endif
 
 // Global Table
 symbol_table * table;

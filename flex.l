@@ -3,11 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "bison.tab.h"
-
-#ifndef _DATAH_
-#define _DATAH_
 #include "data.h"
-#endif
 
 // Declarations
 int flex_left_value_instruction(int);

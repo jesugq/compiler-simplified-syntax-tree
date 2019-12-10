@@ -1,7 +1,4 @@
-#ifndef _SYMBOLH_
-#define _SYMBOLH_
 #include "symbol_table.h"
-#endif
 
 /**
  * Param List has the amount of parameters and the contents of them when the

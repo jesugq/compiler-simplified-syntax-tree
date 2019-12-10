@@ -1,17 +1,11 @@
+#ifndef _SYNTAXH_
+#define _SYNTAXH_
+
 // Imports
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-
-#ifndef _DATAH_
-#define _DATAH_
 #include "data.h"
-#endif
-
-#ifndef _SYMBOLH_
-#define _SYMBOLH_
-#include "symbol_table.h"
-#endif
 
 // Definitions
 // Node Types
@@ -39,11 +33,26 @@
 #define SYNTAX_RETURN       'r'
 #define SYNTAX_ARG          'A'
 
-// Global Values.
-data_value * global_value;
-symbol_table * global_table;
-
 // Declarations
+typedef struct param_list {
+    char * identifier;
+    data_value * value;
+    struct param_list * next;
+} param_list;
+typedef struct symbol_item {
+    int key;
+    int args;
+    char symtype;
+    char * identifier;
+    struct data_value * value;
+    struct param_list * list;
+    struct syntax_node * node;
+} symbol_item;
+typedef struct symbol_table {
+    int size;
+    char symtype;
+    struct symbol_item * items;
+} symbol_table;
 typedef struct syntax_node {
     char nodetype;
     char operation;
@@ -55,6 +64,10 @@ typedef struct syntax_node {
     struct syntax_node * nodeb;
     struct syntax_node * nodec;
 } syntax_node;
+
+// Global Values.
+data_value * global_value;
+symbol_table * global_table;
 
 void syntax_print_node(syntax_node*);
 bool syntax_check_types(syntax_node*, syntax_node*);
@@ -103,3 +116,9 @@ void syntax_operate_term(syntax_node*);
 void syntax_execute_function(syntax_node*);
 void syntax_execute_return(syntax_node*);
 void syntax_update_args(syntax_node*, param_list*);
+
+bool symbol_assign(symbol_table *, char *, data_value *);
+param_list * symbol_get_list(symbol_table *, char *);
+syntax_node * symbol_get_node(symbol_table *, char *);
+
+#endif
