@@ -115,21 +115,38 @@ param_list * symbol_param_create(char * identifier, data_value * value) {
 
 /**
  * Symbol Param Value returns the data found at index function_args.
- * 
+ * @param   table       Table to look into.
+ * @param   identifier  Identifier of the function to insert to.
+ * @param   index       Position where to get the argument.
+ * @return  Data value of the function.
  */
 data_value * symbol_param_value(
-    symbol_table * table, char * identifier, int function_args
+    symbol_table * table, char * identifier, int index
 ) {
     param_list * list = symbol_get_list(table, identifier);
     if (list == NULL) return data_create_integer(0);
 
     int i = 0;
-    while (i <= function_args) {
+    while (i <= index) {
         if (list->next == NULL)
             list = list->next;
         i ++;
     }
     return list->value;
+}
+
+/**
+ * Symbol Param Equals compares the size of the arguments given and the
+ * size of the param list in the function.
+ * @param   table       Table to look into.
+ * @param   identifier  Identifier of the function to insert to.
+ * @param   index       Position where to get the argument.
+ * @return  Argument count of the function.
+ */
+bool symbol_param_equal(
+    symbol_table * table, char * identifier, int index
+) {
+    return symbol_get_args(table, identifier) == index;
 }
 
 /**
@@ -357,6 +374,19 @@ bool symbol_assign(
 }
 
 /**
+ * Function Get Value gets the args from the Function.
+ * @param   table       Function table.
+ * @param   identifier  Identifier to search for.
+ * @return  The value inside of the function.
+ */
+int symbol_get_args(symbol_table * table, char * identifier) {
+    int i = symbol_search(table, identifier);
+    if (i == SYMBOL_NOT_FOUND) return 0;
+    return table->items[i].args;
+}
+
+
+/**
  * Function Get Value gets the data_value from the Function.
  * @param   table       Function table.
  * @param   identifier  Identifier to search for.
@@ -374,7 +404,7 @@ data_value * symbol_get_value(symbol_table * table, char * identifier) {
  * @param   identifier  Identifier to search for.
  * @return  The list inside of the function.
  */
-param_list * function_observe(symbol_table * table, char * identifier) {
+param_list * symbol_get_list(symbol_table * table, char * identifier) {
     int i = symbol_search(table, identifier);
     if (i == SYMBOL_NOT_FOUND) return NULL;
     return table->items[i].list;

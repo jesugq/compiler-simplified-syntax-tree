@@ -50,6 +50,7 @@ int symbol_param_count(param_list *);
 param_list * symbol_param_join(param_list *, param_list *);
 param_list * symbol_param_create(char *, data_value *);
 data_value * symbol_param_value(symbol_table *, char *, int);
+bool symbol_param_equal(symbol_table *, char *, int);
 
 void symbol_print(symbol_table *);
 int symbol_hash_key(char *);
@@ -66,6 +67,7 @@ bool symbol_insert_function(
     param_list *, syntax_node *
 );
 
+int symbol_get_args(symbol_table *, char *);
 data_value * symbol_get_value(symbol_table *, char *);
 param_list * symbol_get_list(symbol_table *, char *);
 syntax_node * symbol_get_node(symbol_table *, char *);

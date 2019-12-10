@@ -22,7 +22,7 @@
 symbol_table * table;
 syntax_node * node;
 char * function_identifier;
-int function_args = -1;
+int function_args = 0;
 
 // Flex externals
 extern FILE * yyin;
@@ -55,8 +55,8 @@ void bison_error_arg_mismatch(char *);
 
 // Bison Terminal Types
 %token<instruction> R_BEGIN R_END R_VAR R_INT R_FLOAT
-%token<instruction> R_IF R_IFELSE R_WHILE R_READ R_PRINT
-%token<instruction> S_SEMICOLON S_COLON S_ASSIGN
+%token<instruction> R_IF R_IFELSE R_WHILE R_READ R_PRINT R_FUN R_RETURN
+%token<instruction> S_SEMICOLON S_COLON S_COMMA S_ASSIGN
 %token<instruction> S_PLUS S_MINUS S_ASTERISK S_SLASH
 %token<instruction> S_PARENTL S_PARENTR S_NEGATIVE
 %token<instruction> S_LESS S_GREATER S_EQUALS S_LTE S_GTE
@@ -69,14 +69,13 @@ void bison_error_arg_mismatch(char *);
 %type<list> opt_params param_lst param
 %type<value> tipo
 %type<node> opt_stmts stmt_lst stmt expression expr term factor opt_args arg_lst
-%type<table> opt_decls decls dec
 
 // Grammar
 %%
 prog
     : opt_decls opt_fun_decls R_BEGIN opt_stmts R_END {
         // The node is given by opt_stmts.
-        node = $3;
+        node = $4;
     }
 ;
 
@@ -112,7 +111,7 @@ opt_fun_decls
 ;
 
 fun_decls
-    : fun_dec S_SEMICOLON fundecls
+    : fun_dec S_SEMICOLON fun_decls
     | fun_dec
 ;
 
@@ -134,15 +133,23 @@ fun_dec
 ;
 
 opt_params
-    : param_lst
-    | %empty
+    : param_lst {
+        // Directly return the node.
+        $$ = $1;
+    }
+    | %empty {
+        // Return an empty node.
+        $$ = NULL;
+    }
 ;
 
 param_lst
     : param S_COMMA param_lst {
-        $$ = symbol_param_join($1, $2);
+        // Create a node and return it.
+        $$ = symbol_param_join($1, $3);
     }
     | param {
+        // Directly return the node.
         $$ = $1;
     }
 ;
@@ -150,19 +157,19 @@ param_lst
 param
     : V_ID S_COLON tipo {
         // Verify that the identifier is unique.
-        if (symbol_exists(table, $2)) {
-            bison_error_identifier_repeated($2);
+        if (symbol_exists(table, $1)) {
+            bison_error_identifier_repeated($1);
             YYERROR;
         }
 
         // Verify that the identifier was inserted.
         if (!symbol_insert_identifier(table, $1, $3)) {
-            bison_error_identifier_failed($2);
+            bison_error_identifier_failed($1);
             YYERROR;
         }
 
         // Create a parameter using an identifier.
-        $$ = symbol_param_create($1, $2);
+        $$ = symbol_param_create($1, $3);
     }
 ;
 
@@ -259,7 +266,7 @@ stmt
     }
     | R_RETURN expr {
         // Create a node of INSTRUCTION RETURN
-        $$ = syntax_create_return($1, NULL, NULL);
+        $$ = syntax_create_return($2, NULL, NULL);
     }
 ;
 
@@ -388,17 +395,18 @@ factor
         }
 
         // Verify that the argument count is correct.
-        if (!symbol_arguments_match(table, $1, function_args+1)) {
+        if (!symbol_param_equal(table, $1, function_args)) {
             bison_error_arg_mismatch($1);
             YYERROR;
         }
 
         // Create a node that runs a function.
         syntax_node * function_node;
-        data_value * value = symbol_get_value($1);
+        data_value * value = symbol_get_value(table, $1);
         function_node = syntax_create_function($1, value, $3);
         
         // Return the newly created node.
+        function_args = 0;
         $$ = function_node;
     }
 ;
@@ -414,15 +422,17 @@ opt_args
     }
 ;
 
-arg_lst {
+arg_lst
     : expr S_COMMA arg_lst {
         // Create a node of arg.
+        function_args ++;
         $$ = syntax_create_arg($1, $3, NULL);
     }
     | expr {
+        function_args ++;
         $$ = syntax_create_arg($1, NULL, NULL);
     }
-}
+;
 
 relop
     : S_LESS {
@@ -557,6 +567,17 @@ void bison_error_not_identifier(char * identifier) {
  */
 void bison_error_not_function(char * identifier) {
     char error[1000] = "called a function but found an identifier: ";
+    strcat(error, identifier);
+    yyerror(error);
+}
+
+/**
+ * Bison Error Argument Mismatch prints that the lexicon was found to be using
+ * an incorrect amount of parameters for a function call.
+ * @param   identifier  Identifier found to be called incorrectly.
+ */
+void bison_error_arg_mismatch(char * identifier) {
+    char error[1000] = "called function with a wrong amount of parameters: ";
     strcat(error, identifier);
     yyerror(error);
 }

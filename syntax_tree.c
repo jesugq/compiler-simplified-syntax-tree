@@ -210,7 +210,6 @@ syntax_node * syntax_create_value(
     );
 }
 
-
 /**
  * Basic Node Creation for the Instructions named below.
  * @param   nodea   First node.

@@ -211,9 +211,9 @@ Similarly, the parameters and the
 The following are the non terminals that need a type.
 ```c
 %type<operation> relop signo
-%type<list> param_list param
+%type<list> opt_params param_lst param
 %type<value> tipo
-%type<node> opt_stmts stmt_lst stmt expression expr term factor
+%type<node> opt_stmts stmt_lst stmt expression expr term factor opt_args arg_lst
 ```
 
 # Symbol Table Specifics

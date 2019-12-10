@@ -73,7 +73,8 @@ syntax_node * syntax_create_ifelse(syntax_node*, syntax_node*, syntax_node*);
 syntax_node * syntax_create_while(syntax_node*, syntax_node*, syntax_node*);
 syntax_node * syntax_create_read(syntax_node*, syntax_node*, syntax_node*);
 syntax_node * syntax_create_print(syntax_node*, syntax_node*, syntax_node*);
-void syntax_create_arg(syntax_node*, syntax_node*, syntax_node*);
+syntax_node * syntax_create_return(syntax_node*, syntax_node*, syntax_node*);
+syntax_node * syntax_create_arg(syntax_node*, syntax_node*, syntax_node*);
 
 void syntax_execute_nodetype(syntax_node*);
 void syntax_execute_instruction(syntax_node*);
