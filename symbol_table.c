@@ -344,7 +344,7 @@ bool symbol_insert_function(
     symbol_item item;
     item.key = key;
     item.args = symbol_param_count(list);
-    item.symtype = SYMBOL_IDENTIFIER;
+    item.symtype = SYMBOL_FUNCTION;
     item.identifier = identifier;
     item.value = value;
     item.list = list;

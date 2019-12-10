@@ -591,7 +591,7 @@ int main(int argc, char * argv[]) {
     table = symbol_initialize();
     node = syntax_initialize();
     int success = yyparse();
-    if (success) {
+    if (success == 0) {
         global_table = table;
         global_value = NULL;
         syntax_execute_nodetype(node);
