@@ -1,4 +1,7 @@
+#ifndef _SYNTAXH_
+#define _SYNTAXH_
 #include "syntax_tree.h"
+#endif
 
 /**
  * Tree Node is each instance of a node that can be added in order to interpret
@@ -554,6 +557,10 @@ void syntax_execute_instruction(syntax_node * node) {
             break;
         case SYNTAX_TERM:
             syntax_operate_term(node);
+        case SYNTAX_FUNCTION:
+            syntax_execute_function(node);
+        case SYNTAX_RETURN:
+            syntax_execute_return(node);
         default:
             break;
     }
@@ -873,4 +880,90 @@ void syntax_operate_term(syntax_node * node) {
 
     // Operate the contents.
     node->value = data_operation(node->nodea->value, node->nodeb->value, node->operation);
+}
+
+/**
+ * Interpretation of return. While not a good practice, the return updates
+ * a global data_value object that is used for all functions.
+ * @param   node    Node to run
+ */
+void syntax_execute_return(syntax_node * node) {
+    // Check if the node is full.
+    if (node == NULL) return;
+
+    // Check if the children are null.
+    if (node->nodea == NULL) {
+        printf("Return: The nodea is empty.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Update nodes.
+    syntax_execute_nodetype(node->nodea);
+
+    // Operate the contents.
+    node->value = node->nodea->value;
+    global_value = node->nodea->value;
+}
+
+/**
+ * Interpretation of function. It updates the table as it runs through the
+ * param_list, and then executes the nodes inside of it. Finally, it updates
+ * the value so that it can be used like an identifier or a value.
+ * @param   node    Node to run
+ */
+void syntax_execute_function(syntax_node * node) {
+    // Check if the node is null.
+    if (node == NULL) return;
+
+    // Check if the children are null.
+    if (node->nodea == NULL) {
+        printf("Function: The nodea is empty.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Update params.
+    syntax_node * function_node;
+    param_list * function_list;
+    function_node = symbol_get_node(global_value, node->identifier);
+    function_list = symbol_get_list(global_value, node->identifier);
+    syntax_update_args(node->nodea, function_list);
+
+    // Execute nodes.
+    syntax_execute_nodetype(function_node);
+
+    // Update the contents.
+    if (global_value != NULL) node->value = global_value;
+}
+
+/**
+ * Interpretation of the argument nodes. It is an auxiliar for function that
+ * updates the values inside of the symbol table in real time for the function
+ * to use them.
+ * @param   node    Node to run
+ * @param   list    List of the parameters used.
+ */
+void syntax_update_args(syntax_node * node, param_list * list) {
+    // Check if the node is null.
+    if (node == NULL) return;
+
+    // Check if the children are null.
+    if (node->nodea == NULL) {
+        printf("Args: The nodea is empty.\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    // Check if the list is null.
+    if (list == NULL) {
+        printf("Args: The list is empty. This means there are not enough parameters inserted.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Update nodes.
+    syntax_execute_nodetype(node->nodea);
+
+    // Update param in the symbol table.
+    symbol_assign(global_table, list->identifier, node->nodea->value);
+
+    // Execute next args.
+    syntax_update_args(node->nodeb, list->next);
 }

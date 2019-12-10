@@ -8,6 +8,11 @@
 #include "data.h"
 #endif
 
+#ifndef _SYMBOLH_
+#define _SYMBOLH_
+#include "symbol_table.h"
+#endif
+
 // Definitions
 // Node Types
 #define SYNTAX_INSTRUCTION  '0'
@@ -30,9 +35,13 @@
 #define SYNTAX_EXPRESSION   'E'
 #define SYNTAX_EXPR         'e'
 #define SYNTAX_TERM         't'
-#define SYNTAX_FUNCTION     'F'
+#define SYNTAX_FUNCTION     'f'
 #define SYNTAX_RETURN       'r'
 #define SYNTAX_ARG          'A'
+
+// Global Values.
+data_value * global_value;
+symbol_table * global_table;
 
 // Declarations
 typedef struct syntax_node {
@@ -91,3 +100,6 @@ void syntax_execute_print(syntax_node*);
 void syntax_evaluate_expression(syntax_node*);
 void syntax_operate_expr(syntax_node*);
 void syntax_operate_term(syntax_node*);
+void syntax_execute_function(syntax_node*);
+void syntax_execute_return(syntax_node*);
+void syntax_update_args(syntax_node*, param_list*);

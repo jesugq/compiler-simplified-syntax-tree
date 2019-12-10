@@ -603,7 +603,11 @@ int main(int argc, char * argv[]) {
     table = symbol_initialize();
     node = syntax_initialize();
     int success = yyparse();
-    if (success) syntax_execute_nodetype(node);
+    if (success) {
+        global_table = table;
+        global_value = NULL;
+        syntax_execute_nodetype(node);
+    }
     symbol_print(table);
 
     // Closure of file and system.

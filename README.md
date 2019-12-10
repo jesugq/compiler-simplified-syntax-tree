@@ -432,7 +432,7 @@ symbol table for the parameters in this function using the arguments in node a.
 Afterwards it needs to execute all of its nodes, and all of those nodes will bring back a value using
 the return command.
 Returns the value in this node. But since all calls to FACTOR execute the node, the function node is responsible for updating its value by running the statements inside of it first.
-* nodetype      is INSTRUCTION of FUNCTION
+* nodetype      is INSTRUCTION
 * operation     is NULL
 * evaluation    is NULL
 * instruction   is FUNCTION
@@ -442,15 +442,26 @@ Returns the value in this node. But since all calls to FACTOR execute the node, 
 * nodeb         is NULL
 * nodec         is NULL
 
+Node of type RETURN
+Updates the value of this node.
+* nodetype      is INSTRUCTION
+* operation     is NULL
+* evaluation    is NULL
+* instruction   is RETURN
+* identifier    is NULL
+* value         is INTEGER or FLOAT
+* nodea         is INSTRUCTION of EPXR
+* nodeb         is NULL
+* nodec         is NULL
+
 Node of type ARG
 Updates the value in the nodea using the value in the nodeb and then executes nodec.
-* nodetype      is INSTRUCTION of ARG
+* nodetype      is INSTRUCTION
 * operation     is NULL
 * evaluation    is NULL
 * instruction   is ARG
 * identifier    is NULL
 * value         is INTEGER or FLOAT
-* nodea         is IDENTIFIER or VALUE
-* nodeb         is INSTRUCTION of EXPR
-* nodec         is INSTRUCTION of ARG or NULL
+* nodea         is INSTRUCTION OF EXPR
+* nodeb         is INSTRUCTION of ARG
 ```
